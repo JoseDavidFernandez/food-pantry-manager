@@ -13,7 +13,8 @@ class CreateNewUser implements CreatesNewUsers
     use PasswordValidationRules, ProfileValidationRules;
 
     /**
-     * Validate and create a newly registered user.
+     * Validate and create a newly registered user. The account has no household yet: before using
+     * the app the user creates one or accepts an invitation (RN-01, EnsureUserHasHousehold).
      *
      * @param  array<string, string>  $input
      */

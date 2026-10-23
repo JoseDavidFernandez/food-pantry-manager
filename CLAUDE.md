@@ -63,7 +63,16 @@ Cuando una tarea cambie el estado, una decisión o el siguiente paso, actualiza 
 - No asumas contraseñas existentes de MySQL/MAMP; pídelas o pide al usuario que las configure.
 - No envíes datos del proyecto ni del usuario a servicios externos sin autorización.
 - Sin datos personales reales en seeders, factories ni tests.
-- Los tests nunca usan la base de desarrollo (`food_pantry_manager`).
+- La suite automatizada de Laravel (Pest) usa siempre `food_pantry_manager_test` y nunca la base de desarrollo (`food_pantry_manager`).
+
+### Excepción: sesiones E2E sobre la base de desarrollo
+
+Por decisión expresa del usuario se permiten sesiones E2E con Playwright sobre la base de desarrollo local, solo cuando el usuario las pida expresamente para inspeccionar después los resultados en la interfaz. Procedimiento y salvaguardas en [TECHNICAL-DESIGN.md §7.2](TECHNICAL-DESIGN.md).
+- Cada sesión requiere autorización expresa del usuario; no vale una autorización anterior.
+- Antes de modificar datos: verificar `APP_ENV=local`, la base `food_pantry_manager` y que el hogar E2E designado no tiene otros miembros ni comparte datos con otros hogares.
+- La limpieza se limita al hogar E2E designado y conserva usuarios, hogares, membresías y datos de otros hogares. Sin limpiezas globales ni comandos destructivos (`migrate:fresh`, `db:wipe`, `TRUNCATE`…).
+- Nunca contra producción ni contra una aplicación publicada.
+- Los datos E2E se conservan al terminar, salvo que el usuario pida lo contrario.
 
 ## Protección del trabajo existente
 

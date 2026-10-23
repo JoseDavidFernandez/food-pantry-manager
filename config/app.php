@@ -13,7 +13,7 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Food & Pantry Manager'),
 
     /*
     |--------------------------------------------------------------------------
@@ -66,6 +66,9 @@ return [
     */
 
     'timezone' => 'UTC',
+
+    // Timezone used to show dates and to decide the "current week" (TECHNICAL-DESIGN §6).
+    'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Europe/Madrid'),
 
     /*
     |--------------------------------------------------------------------------

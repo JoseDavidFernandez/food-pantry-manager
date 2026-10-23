@@ -5,12 +5,12 @@
 | Fase | Nombre | Depende de | Estado |
 |---|---|---|---|
 | 0 | Preparación documental | — | Cerrada |
-| 1 | Fundamentos | 0 | En curso |
-| 2 | Ingredientes e inventario | 1 | Pendiente |
-| 3 | Recetas | 2 | Pendiente |
-| 4 | Menú semanal | 3 | Pendiente |
-| 5 | Cierre de menú y lista de la compra | 4 | Pendiente |
-| 6 | Recepción de compra | 5 | Pendiente |
+| 1 | Fundamentos | 0 | Cerrada (2026-10-21) |
+| 2 | Ingredientes e inventario | 1 | Cerrada (2026-10-21) |
+| 3 | Recetas | 2 | Cerrada (2026-10-21) |
+| 4 | Menú semanal | 3 | Cerrada (2026-10-21) |
+| 5 | Cierre de menú y lista de la compra | 4 | Cerrada (2026-10-20) |
+| 6 | Recepción de compra | 5 | Cerrada (2026-10-21) |
 | 7 | Publicación | 6 | Pendiente |
 
 El estado de cada tarea se registra solo en [PROJECT-STATUS.md](PROJECT-STATUS.md); aquí solo cambia el estado de la fase al abrirla o cerrarla.
@@ -50,10 +50,15 @@ El estado de cada tarea se registra solo en [PROJECT-STATUS.md](PROJECT-STATUS.m
 ## Fase 4 — Menú semanal
 **Tareas:** menú por semana (Europe/Madrid); rejilla de 14 espacios con un plato por espacio; recetas y platos puntuales; indicador de completitud.
 **Criterios de cierre:** CA-15, CA-16, CA-17 en verde; rejilla usable en escritorio y móvil.
+**Cambio posterior (2026-10-22):** cada espacio admite varios platos ordenados (RN-16, CA-27) y mover o soltar añade sin intercambiar ni sustituir (RN-33, CA-21 revisado). Pruebas y E2E actualizados y en verde.
 
 ## Fase 5 — Cierre de menú y lista de la compra
 **Tareas:** cálculo con `bcmath`; cierre transaccional con bloqueo; advertencia por espacios vacíos; reapertura; conciliación y estado de compra; pantalla de lista editable.
 **Criterios de cierre:** CA-06 a CA-13 en verde, incluidas pruebas de integración contra MySQL para CA-10.
+**Cambio posterior (2026-10-21):** el cierre y la reapertura del menú se sustituyeron por la lista persistente por periodo (RN-36).
+- CA-06 y CA-07 se retiraron, y CA-10 se redefinió (una lista por hogar y periodo, también ante peticiones simultáneas).
+- La conciliación de RN-27 y RN-28 se mantiene.
+- Pruebas actualizadas y en verde.
 
 ## Fase 6 — Recepción de compra
 **Prerrequisitos:** decidir recepciones por lista ([DATA-MODEL.md §8](DATA-MODEL.md)) y herramienta E2E (DT-03).
@@ -61,5 +66,21 @@ El estado de cada tarea se registra solo en [PROJECT-STATUS.md](PROJECT-STATUS.m
 **Criterios de cierre:** CA-14 en verde; flujo menú → lista → recepción → inventario verificado (E2E o prueba manual documentada).
 
 ## Fase 7 — Publicación
-**Tareas:** resolver DT-05, DT-06 y DT-07; revisión de seguridad y accesibilidad (WCAG 2.2 AA); configuración de producción; despliegue con autorización explícita.
-**Criterios de cierre:** todos los CA verificados (incluido CA-18); copia de seguridad y restauración probadas; aplicación accesible en el entorno acordado.
+**Prerrequisito: cambios de producto (2026-10-21).** No son tareas de publicación. El usuario debe validar en el navegador:
+- el rediseño, las categorías (RN-31) y las imágenes (RN-32);
+- la reorganización: Inventario como único apartado de alimentos, el calendario con recetario y arrastrar y soltar (RN-33), e Inicio como panel de resumen (RN-34);
+- la compra por periodo: lista persistente sin cierre del menú, historial, «No comido» y clasificación automática (RN-31, RN-36, RN-37).
+
+CA-19 a CA-22 están cubiertos por tests automáticos y, salvo la búsqueda real de imágenes, por la sesión E2E.
+**Tareas** (cada despliegue o cambio en servicios externos, con autorización explícita):
+1. **CI con MySQL:** workflow con MySQL de la versión de producción, `composer ci:check`, `npm run build` y `npm audit` (DT-06).
+2. **Compatibilidad de MySQL:** elegir la versión de producción (DT-07; 8.4 LTS recomendada) y ejecutar la suite contra ella.
+3. **Entorno y despliegue:** proveedor, `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, colas y tareas programadas si hacen falta, `storage` persistente (imágenes de ingredientes) y procedimiento de despliegue (DT-06).
+4. **Copias de seguridad y restauración** de la base y de `storage/app/private`, probadas con una restauración real.
+5. **Correo:** proveedor, remitente, verificación de email y recuperación de contraseña en producción (DT-05).
+6. **Autenticación en producción:** verificación en dos pasos y llaves de acceso (DT-05).
+7. **Seguridad:** revisión antes de publicar (cabeceras, CSP con los orígenes de imágenes de búsqueda, límites de peticiones, dependencias, `vite-plus` ≥ 1.1.0 o mitigación documentada).
+8. **Accesibilidad:** WCAG 2.2 AA en las pantallas principales, a 360 px y en modo oscuro (CA-18).
+9. **Proveedores de imágenes:** `INGREDIENT_IMAGES_CONTACT` con un contacto del servicio y la decisión de mantener activada la búsqueda. Si algún día se usa un proveedor con clave, la clave va solo en el servidor (TECHNICAL-DESIGN §10).
+
+**Criterios de cierre:** todos los CA verificados (incluidos CA-18, CA-19 y CA-20); copia de seguridad y restauración probadas; CI en verde contra la versión de MySQL de producción; aplicación accesible en el entorno acordado.

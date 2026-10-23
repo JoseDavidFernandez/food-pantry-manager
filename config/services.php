@@ -35,4 +35,17 @@ return [
         ],
     ],
 
+    /*
+     * Ingredient images (TECHNICAL-DESIGN §10): Wikimedia Commons for generic photos and
+     * Open Food Facts for packaged products. Neither needs an API key. Searches only run when
+     * the user asks for them; the chosen image is copied locally with its attribution.
+     */
+    'ingredient_images' => [
+        'enabled' => (bool) env('INGREDIENT_IMAGES_ENABLED', true),
+        // Identifies the app to the providers (User-Agent), as both require. No personal data.
+        'contact' => env('INGREDIENT_IMAGES_CONTACT', env('APP_URL', 'http://localhost')),
+        'timeout' => (int) env('INGREDIENT_IMAGES_TIMEOUT', 6),
+        'max_bytes' => 2 * 1024 * 1024,
+    ],
+
 ];

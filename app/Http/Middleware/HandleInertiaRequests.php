@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -40,8 +41,37 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'household' => $this->household($request->user()),
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+        ];
+    }
+
+    /**
+     * The user's household, role and permissions (RN-38), so the interface hides what the server
+     * would refuse anyway. Null without a household.
+     *
+     * @return array{id: int, name: string, role: string, role_label: string, can: array{write: bool, manage: bool}}|null
+     */
+    private function household(mixed $user): ?array
+    {
+        if (! $user instanceof User) {
+            return null;
+        }
+
+        $household = $user->households()->first();
+        $role = $user->householdRole();
+
+        if ($household === null || $role === null) {
+            return null;
+        }
+
+        return [
+            'id' => $household->id,
+            'name' => $household->name,
+            'role' => $role->value,
+            'role_label' => $role->label(),
+            'can' => ['write' => $role->canWrite(), 'manage' => $role->canManage()],
         ];
     }
 }

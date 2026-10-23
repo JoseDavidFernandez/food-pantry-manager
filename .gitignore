@@ -42,3 +42,9 @@ yarn-error.log
 /boost.json
 /opencode.json
 /opencode.jsonc
+
+# Playwright E2E (local development session)
+/e2e/.auth
+/e2e/results
+/e2e/report
+/e2e/evidence

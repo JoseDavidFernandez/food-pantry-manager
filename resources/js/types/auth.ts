@@ -10,8 +10,18 @@ export type User = {
     [key: string]: unknown;
 };
 
+/** The user's household, role and permissions (RN-38); null without a household. */
+export type HouseholdAccess = {
+    id: number;
+    name: string;
+    role: 'admin' | 'editor' | 'viewer';
+    role_label: string;
+    can: { write: boolean; manage: boolean };
+};
+
 export type Auth = {
     user: User;
+    household: HouseholdAccess | null;
 };
 
 export type Passkey = {

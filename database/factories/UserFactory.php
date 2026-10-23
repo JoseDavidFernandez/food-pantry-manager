@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Enums\HouseholdRole;
+use App\Models\Household;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
@@ -44,6 +46,26 @@ class UserFactory extends Factory
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
         ]);
+    }
+
+    /**
+     * Give the user their own household, as registration does (RN-01).
+     */
+    public function withHousehold(HouseholdRole $role = HouseholdRole::Admin): static
+    {
+        return $this->afterCreating(function (User $user) use ($role) {
+            Household::factory()->create(['name' => 'Hogar de '.$user->name])->members()->attach($user, ['role' => $role->value]);
+        });
+    }
+
+    /**
+     * A member of an existing household with the given role (RN-38).
+     */
+    public function memberOf(Household $household, HouseholdRole $role = HouseholdRole::Editor): static
+    {
+        return $this->afterCreating(function (User $user) use ($household, $role) {
+            $household->members()->attach($user, ['role' => $role->value]);
+        });
     }
 
     /**

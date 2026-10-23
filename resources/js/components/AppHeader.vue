@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from '@lucide/vue';
+import {
+    BookOpen,
+    CalendarDays,
+    LayoutGrid,
+    Menu,
+    Refrigerator,
+    ShoppingCart,
+    Search,
+} from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
@@ -36,6 +44,10 @@ import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import { getInitials } from '@/composables/useInitials';
 import { toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as inventory } from '@/routes/inventory';
+import { show as menu } from '@/routes/menu';
+import { index as recipes } from '@/routes/recipes';
+import { period as shoppingList } from '@/routes/shopping-list';
 import type { BreadcrumbItem, NavItem } from '@/types';
 
 type Props = {
@@ -55,24 +67,33 @@ const activeItemStyles =
 
 const mainNavItems: NavItem[] = [
     {
-        title: 'Dashboard',
+        title: 'Inicio',
         href: dashboard(),
         icon: LayoutGrid,
     },
-];
-
-const rightNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/vue-starter-kit',
-        icon: Folder,
+        title: 'Menú',
+        href: menu(),
+        icon: CalendarDays,
     },
     {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#vue',
+        title: 'Lista de la compra',
+        href: shoppingList(),
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Inventario',
+        href: inventory(),
+        icon: Refrigerator,
+    },
+    {
+        title: 'Recetas',
+        href: recipes(),
         icon: BookOpen,
     },
 ];
+
+const rightNavItems: NavItem[] = [];
 </script>
 
 <template>
@@ -93,7 +114,7 @@ const rightNavItems: NavItem[] = [
                         </SheetTrigger>
                         <SheetContent side="left" class="w-[300px] p-6">
                             <SheetTitle class="sr-only"
-                                >Navigation menu</SheetTitle
+                                >Menú de navegación</SheetTitle
                             >
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon
