@@ -286,7 +286,7 @@ onBeforeUnmount(() => {
                                 :key="choice.value"
                                 :class="
                                     cn(
-                                        'flex min-h-11 cursor-pointer items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-ring/50',
+                                        'flex min-h-11 cursor-pointer items-center justify-center rounded-md border px-3 text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring',
                                         decisions[index] === choice.value
                                             ? 'border-primary bg-primary text-primary-foreground'
                                             : 'hover:bg-accent',

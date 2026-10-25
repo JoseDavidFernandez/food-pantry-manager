@@ -30,7 +30,6 @@ yarn-error.log
 /.zed
 /.agents
 /.amp
-/.claude/settings.local.json
 /.cursor
 /.factory
 /.grok
@@ -48,3 +47,8 @@ yarn-error.log
 /e2e/results
 /e2e/report
 /e2e/evidence
+
+# Claude Code e Impeccable: instrucciones, configuración, skills, agentes y archivos de trabajo (solo en local)
+/CLAUDE.md
+/.claude/
+/.impeccable/

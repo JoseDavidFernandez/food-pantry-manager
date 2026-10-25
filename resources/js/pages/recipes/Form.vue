@@ -122,12 +122,12 @@ const cancelHref = computed(() =>
             </section>
 
             <div class="grid gap-2">
-                <Label for="instructions">Preparación (opcional)</Label>
+                <Label for="instructions">Pasos (opcional)</Label>
                 <textarea
                     id="instructions"
                     name="instructions"
                     rows="5"
-                    class="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 md:text-sm dark:bg-input/30"
+                    class="w-full rounded-md border border-input bg-card px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring md:text-sm"
                     :value="recipe?.instructions ?? ''"
                 />
                 <InputError :message="errors.instructions" />

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import { BookOpen, Plus } from '@lucide/vue';
+import { BookOpen, ChevronRight, Plus } from '@lucide/vue';
+import FilterTabs from '@/components/FilterTabs.vue';
 import Heading from '@/components/Heading.vue';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -40,33 +41,22 @@ defineOptions({
             </Button>
         </div>
 
-        <nav class="flex gap-2 text-sm" aria-label="Filtrar recetas">
-            <Link
-                :href="index()"
-                :class="
-                    !showArchived
-                        ? 'font-semibold underline'
-                        : 'text-muted-foreground'
-                "
-            >
-                Activas
-            </Link>
-            <span class="text-muted-foreground">·</span>
-            <Link
-                :href="index({ query: { archived: 1 } })"
-                :class="
-                    showArchived
-                        ? 'font-semibold underline'
-                        : 'text-muted-foreground'
-                "
-            >
-                Archivadas ({{ archivedCount }})
-            </Link>
-        </nav>
+        <FilterTabs
+            label="Filtrar recetas"
+            :tabs="[
+                { label: 'Activas', href: index(), active: !showArchived },
+                {
+                    label: 'Archivadas',
+                    href: index({ query: { archived: 1 } }),
+                    active: showArchived,
+                    count: archivedCount,
+                },
+            ]"
+        />
 
         <div
             v-if="recipes.length === 0"
-            class="flex flex-col items-center gap-2 rounded-xl border border-dashed p-8 text-center"
+            class="flex flex-col items-center gap-2 rounded-md bg-muted p-8 text-center"
         >
             <BookOpen class="size-8 text-muted-foreground" />
             <p class="font-medium">
@@ -82,14 +72,20 @@ defineOptions({
             </p>
         </div>
 
-        <ul v-else class="divide-y rounded-xl border">
+        <ul v-else class="grid gap-px overflow-hidden rounded-md bg-border">
             <li v-for="recipe in recipes" :key="recipe.id">
                 <Link
                     :href="show(recipe.id)"
-                    class="flex items-center gap-3 px-4 py-3 hover:bg-accent"
+                    class="flex items-center gap-3 bg-card px-4 py-3 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
                 >
+                    <span
+                        class="grid size-10 shrink-0 place-items-center rounded-sm bg-secondary"
+                        aria-hidden="true"
+                    >
+                        <BookOpen class="size-5" />
+                    </span>
                     <div class="min-w-0 flex-1">
-                        <p class="truncate font-medium">{{ recipe.name }}</p>
+                        <p class="truncate font-semibold">{{ recipe.name }}</p>
                         <p class="text-sm text-muted-foreground">
                             {{ recipe.base_servings }}
                             {{
@@ -111,10 +107,14 @@ defineOptions({
                     >
                     <Badge
                         v-else-if="recipe.ingredient_count === 0"
-                        variant="outline"
+                        variant="warning"
                     >
                         Sin ingredientes
                     </Badge>
+                    <ChevronRight
+                        class="size-4 shrink-0 text-muted-foreground"
+                        aria-hidden="true"
+                    />
                 </Link>
             </li>
         </ul>

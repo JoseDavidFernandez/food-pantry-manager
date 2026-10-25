@@ -15,13 +15,17 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <header v-if="variant === 'small'">
-        <h2 class="mb-0.5 text-base font-semibold">{{ title }}</h2>
+        <h2 class="mb-0.5 text-base font-bold">{{ title }}</h2>
         <p v-if="description" class="text-sm text-muted-foreground">
             {{ description }}
         </p>
     </header>
     <header v-else class="grid gap-1">
-        <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
+        <h1
+            class="text-[1.75rem] leading-none font-display text-balance sm:text-3xl"
+        >
+            {{ title }}
+        </h1>
         <p v-if="description" class="text-sm text-muted-foreground">
             {{ description }}
         </p>

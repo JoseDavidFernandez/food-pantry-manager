@@ -32,7 +32,8 @@ void createInertiaApp({
         });
     },
     progress: {
-        color: '#4B5563',
+        // Almagre; app.css makes the bar follow --primary in light and dark.
+        color: '#a63f28',
     },
 });
 

@@ -13,6 +13,8 @@ import type { Ingredient, UnitOption } from '@/types/pantry';
  * after the planned meals. Also shows the single restock asked for by «Se acabó».
  */
 defineProps<{
+    /** Inside a folded section that already shows the title (R4). */
+    headless?: boolean;
     food: Ingredient;
     units: UnitOption[];
     readonly?: boolean;
@@ -21,12 +23,15 @@ defineProps<{
 
 <template>
     <section
-        class="grid gap-3 border-t pt-4"
+        :class="['grid gap-3', !headless && 'border-t pt-4']"
         :aria-labelledby="`food-restock-${food.id}`"
         data-restock
     >
         <div class="grid gap-1">
-            <h3 :id="`food-restock-${food.id}`" class="text-sm font-medium">
+            <h3
+                :id="`food-restock-${food.id}`"
+                :class="headless ? 'sr-only' : 'text-sm font-medium'"
+            >
                 Mínimo en casa
             </h3>
             <p class="text-xs text-muted-foreground">

@@ -37,6 +37,9 @@ const CATEGORY_ICONS: Record<string, Component> = {
     other: ShoppingBasket,
 };
 
+/** Categories in their catalog order (the aisles of the shopping list follow it). */
+export const CATEGORY_ORDER = Object.keys(CATEGORY_ICONS);
+
 export function categoryIcon(category: string | null | undefined): Component {
     return (category && CATEGORY_ICONS[category]) || CircleHelp;
 }

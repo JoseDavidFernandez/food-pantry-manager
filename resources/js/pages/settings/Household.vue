@@ -114,8 +114,6 @@ const past = computed(() =>
 <template>
     <Head title="Hogar" />
 
-    <h1 class="sr-only">Hogar</h1>
-
     <div class="flex flex-col space-y-10">
         <section class="space-y-4">
             <Heading
@@ -157,11 +155,11 @@ const past = computed(() =>
 
         <section class="space-y-4" aria-labelledby="members-title">
             <h2 id="members-title" class="text-base font-medium">Miembros</h2>
-            <ul class="divide-y rounded-xl border">
+            <ul class="divide-y border-y">
                 <li
                     v-for="member in members"
                     :key="member.id"
-                    class="flex flex-wrap items-center gap-3 px-4 py-3"
+                    class="flex flex-wrap items-center gap-3 py-3"
                 >
                     <span class="grid min-w-0 flex-1">
                         <span class="font-medium break-words"
@@ -185,7 +183,7 @@ const past = computed(() =>
                         <select
                             :id="`role-${member.id}`"
                             :value="member.role"
-                            class="h-10 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                            class="h-10 rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                             @change="
                                 changeRole(
                                     member.id,
@@ -262,7 +260,7 @@ const past = computed(() =>
             <h2 id="invite-title" class="text-base font-medium">
                 Invitar a alguien
             </h2>
-            <p class="text-sm text-muted-foreground">
+            <p class="max-w-prose text-sm text-pretty text-muted-foreground">
                 Se unirá con su propia cuenta, registrada con ese correo. La
                 invitación caduca a los 7 días.
                 <template v-if="mailSimulated">
@@ -307,7 +305,7 @@ const past = computed(() =>
 
             <div
                 v-if="createdLink"
-                class="grid gap-2 rounded-lg border border-primary/30 bg-accent/50 p-3 text-sm"
+                class="grid gap-2 rounded-md bg-muted p-3 text-sm"
                 role="status"
             >
                 <p>
@@ -344,11 +342,11 @@ const past = computed(() =>
                 >
                     No hay invitaciones pendientes.
                 </p>
-                <ul v-else class="divide-y rounded-xl border">
+                <ul v-else class="divide-y border-y">
                     <li
                         v-for="invitation in pending"
                         :key="invitation.id"
-                        class="flex flex-wrap items-center gap-3 px-4 py-3 text-sm"
+                        class="flex flex-wrap items-center gap-3 py-3 text-sm"
                     >
                         <span class="grid min-w-0 flex-1">
                             <span class="break-all">{{
@@ -382,11 +380,11 @@ const past = computed(() =>
                 <summary class="cursor-pointer font-medium">
                     Invitaciones anteriores ({{ past.length }})
                 </summary>
-                <ul class="mt-2 divide-y rounded-xl border">
+                <ul class="mt-2 divide-y border-y">
                     <li
                         v-for="invitation in past"
                         :key="invitation.id"
-                        class="flex flex-wrap items-center justify-between gap-2 px-4 py-2"
+                        class="flex flex-wrap items-center justify-between gap-2 py-2"
                     >
                         <span class="break-all">{{ invitation.email }}</span>
                         <Badge variant="outline">{{
@@ -405,16 +403,16 @@ const past = computed(() =>
             <h2 id="received-title" class="text-base font-medium">
                 Invitaciones a otros hogares
             </h2>
-            <p class="text-sm text-muted-foreground">
+            <p class="max-w-prose text-sm text-pretty text-muted-foreground">
                 Cada cuenta pertenece a un solo hogar: para aceptar una, primero
                 tienes que salir de este. Mientras tanto siguen disponibles
                 hasta que caduquen; no se ha cambiado nada.
             </p>
-            <ul class="divide-y rounded-xl border text-sm">
+            <ul class="divide-y border-y text-sm">
                 <li
                     v-for="invitation in receivedInvitations"
                     :key="invitation.id"
-                    class="flex flex-wrap items-center justify-between gap-2 px-4 py-3"
+                    class="flex flex-wrap items-center justify-between gap-2 py-3"
                 >
                     <span>
                         <strong>{{
@@ -448,7 +446,7 @@ const past = computed(() =>
             <h2 id="leave-title" class="text-base font-medium">
                 Salir del hogar
             </h2>
-            <p class="text-sm text-muted-foreground">
+            <p class="max-w-prose text-sm text-pretty text-muted-foreground">
                 Dejarás de ver sus datos y tendrás que crear un hogar o aceptar
                 otra invitación. Los datos se quedan en el hogar.
             </p>

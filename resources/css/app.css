@@ -7,12 +7,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Archivo (OFL), served by the app: variable weight and width, latin subset
+   (resources/fonts/archivo). Width carries the display voice; figures are tabular. */
+@font-face {
+    font-family: 'Archivo';
+    font-style: normal;
+    font-weight: 100 900;
+    font-stretch: 62% 125%;
+    font-display: swap;
+    src: url('../fonts/archivo/archivo-latin-variable.woff2') format('woff2');
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+        U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193,
+        U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @theme inline {
     --font-sans:
-        Instrument Sans, ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Archivo', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    --radius-xl: calc(var(--radius) + 2px);
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -47,6 +62,16 @@
     --color-warning: var(--warning);
     --color-warning-soft: var(--warning-soft);
     --color-warning-border: var(--warning-border);
+    --color-info: var(--info);
+    --color-info-soft: var(--info-soft);
+
+    --color-pigment-almagre: var(--pigment-almagre);
+    --color-pigment-ocre: var(--pigment-ocre);
+    --color-pigment-botella: var(--pigment-botella);
+    --color-pigment-cobalto: var(--pigment-cobalto);
+    --color-overlay: var(--overlay);
+    --color-tile-lunch: var(--tile-lunch);
+    --color-tile-dinner: var(--tile-dinner);
 
     --color-border: var(--border);
     --color-input: var(--input);
@@ -86,108 +111,195 @@
     }
 }
 
-@layer utilities {
-    body,
-    html {
-        --font-sans:
-            'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-            'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-            'Noto Color Emoji';
-    }
-}
-
 :root {
-    /* Warm, light kitchen palette (DESIGN-SYSTEM §4): warm off-white page, white cards,
-       herb-green primary. Text colours keep WCAG AA contrast on their backgrounds. */
-    --background: hsl(40 33% 98%);
-    --foreground: hsl(24 12% 11%);
-    --card: hsl(0 0% 100%);
-    --card-foreground: hsl(24 12% 11%);
-    --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(24 12% 11%);
-    --primary: hsl(152 45% 28%);
-    --primary-foreground: hsl(0 0% 100%);
-    --secondary: hsl(40 22% 93%);
-    --secondary-foreground: hsl(24 12% 14%);
-    --muted: hsl(40 22% 95%);
-    --muted-foreground: hsl(25 8% 38%);
-    --accent: hsl(150 30% 93%);
-    --accent-foreground: hsl(152 45% 20%);
-    --destructive: hsl(0 72% 45%);
-    --destructive-foreground: hsl(0 0% 100%);
-    --success: hsl(152 50% 28%);
-    --success-foreground: hsl(0 0% 100%);
-    --success-soft: hsl(150 40% 94%);
-    --warning: hsl(30 85% 28%);
-    --warning-soft: hsl(43 90% 94%);
-    --warning-border: hsl(40 75% 72%);
-    --border: hsl(35 18% 88%);
-    --input: hsl(35 15% 82%);
-    --ring: hsl(152 45% 28%);
-    --chart-1: hsl(12 76% 61%);
-    --chart-2: hsl(173 58% 39%);
-    --chart-3: hsl(197 37% 24%);
-    --chart-4: hsl(43 74% 66%);
-    --chart-5: hsl(27 87% 67%);
-    --radius: 0.75rem;
-    --sidebar-background: hsl(40 28% 96%);
-    --sidebar-foreground: hsl(24 10% 22%);
-    --sidebar-primary: hsl(152 45% 28%);
-    --sidebar-primary-foreground: hsl(0 0% 100%);
-    --sidebar-accent: hsl(150 28% 91%);
-    --sidebar-accent-foreground: hsl(152 45% 18%);
-    --sidebar-border: hsl(35 18% 88%);
-    --sidebar-ring: hsl(152 45% 28%);
-    --sidebar: hsl(40 28% 96%);
+    /* «Baldosa hidráulica» (DESIGN-SYSTEM §4): cement ground, light tile pieces, joints as
+       borders, almagre for actions and selection, charcoal for text and the shell, cobalt for
+       keyboard focus, and four tile pigments for category and state. Text colours keep WCAG AA
+       contrast on their backgrounds. */
+    --background: #e4e3df;
+    --foreground: #1f1d1b;
+    --card: #f7f7f4;
+    --card-foreground: #1f1d1b;
+    --popover: #fbfbf9;
+    --popover-foreground: #1f1d1b;
+    --primary: #a63f28;
+    --primary-foreground: #ffffff;
+    --secondary: #dbd9d3;
+    --secondary-foreground: #1f1d1b;
+    --muted: #e0dfda;
+    --muted-foreground: #55524c;
+    --accent: #d6d4cd;
+    --accent-foreground: #1f1d1b;
+    --destructive: #a51c30;
+    --destructive-foreground: #ffffff;
+    --success: #2f5d4a;
+    --success-foreground: #ffffff;
+    --success-soft: #dce8e1;
+    --warning: #7d5210;
+    --warning-soft: #f5e6c8;
+    --warning-border: #d9ae62;
+    --info: #2b4c8c;
+    --info-soft: #dce3f0;
+    --border: #cbc8c0;
+    --input: #969288;
+    --ring: #2b4c8c;
+    --overlay: rgb(31 29 27 / 0.6);
+    --pigment-almagre: #a63f28;
+    --pigment-ocre: #c98a1e;
+    --pigment-botella: #2f5d4a;
+    --pigment-cobalto: #2b4c8c;
+    /* Menu tiles: a tint of the meal's pigment over the tile, so charcoal text keeps AA. */
+    --tile-lunch: color-mix(in oklab, var(--pigment-ocre) 26%, var(--card));
+    --tile-dinner: color-mix(in oklab, var(--pigment-cobalto) 16%, var(--card));
+    --chart-1: #a63f28;
+    --chart-2: #c98a1e;
+    --chart-3: #2f5d4a;
+    --chart-4: #2b4c8c;
+    --chart-5: #5a534b;
+    --radius: 0.375rem;
+    --sidebar-background: #1f1d1b;
+    --sidebar-foreground: #e4dfd7;
+    --sidebar-primary: #a63f28;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #34302b;
+    --sidebar-accent-foreground: #f8f6f2;
+    --sidebar-border: #34302b;
+    --sidebar-ring: #8fb0e6;
+    --sidebar: #1f1d1b;
 }
 
 .dark {
-    --background: hsl(30 8% 8%);
-    --foreground: hsl(40 20% 95%);
-    --card: hsl(30 7% 11%);
-    --card-foreground: hsl(40 20% 95%);
-    --popover: hsl(30 7% 11%);
-    --popover-foreground: hsl(40 20% 95%);
-    --primary: hsl(150 42% 58%);
-    --primary-foreground: hsl(152 50% 9%);
-    --secondary: hsl(30 6% 17%);
-    --secondary-foreground: hsl(40 20% 95%);
-    --muted: hsl(30 6% 15%);
-    --muted-foreground: hsl(35 10% 68%);
-    --accent: hsl(152 20% 18%);
-    --accent-foreground: hsl(150 40% 85%);
-    --destructive: hsl(0 72% 60%);
-    --destructive-foreground: hsl(0 0% 100%);
-    --success: hsl(150 42% 58%);
-    --success-foreground: hsl(152 50% 9%);
-    --success-soft: hsl(152 25% 16%);
-    --warning: hsl(40 90% 70%);
-    --warning-soft: hsl(35 40% 15%);
-    --warning-border: hsl(35 50% 32%);
-    --border: hsl(30 6% 20%);
-    --input: hsl(30 6% 24%);
-    --ring: hsl(150 42% 58%);
-    --chart-1: hsl(220 70% 50%);
-    --chart-2: hsl(160 60% 45%);
-    --chart-3: hsl(30 80% 55%);
-    --chart-4: hsl(280 65% 60%);
-    --chart-5: hsl(340 75% 55%);
-    --sidebar-background: hsl(30 8% 10%);
-    --sidebar-foreground: hsl(40 15% 90%);
-    --sidebar-primary: hsl(150 42% 58%);
-    --sidebar-primary-foreground: hsl(152 50% 9%);
-    --sidebar-accent: hsl(152 18% 18%);
-    --sidebar-accent-foreground: hsl(150 40% 88%);
-    --sidebar-border: hsl(30 6% 18%);
-    --sidebar-ring: hsl(150 42% 58%);
-    --sidebar: hsl(30 8% 10%);
+    --background: #161412;
+    --foreground: #ece8e1;
+    --card: #201d1a;
+    --card-foreground: #ece8e1;
+    --popover: #26221f;
+    --popover-foreground: #ece8e1;
+    --primary: #e0805f;
+    --primary-foreground: #161412;
+    --secondary: #2c2824;
+    --secondary-foreground: #ece8e1;
+    --muted: #2a2622;
+    --muted-foreground: #b5ab9e;
+    --accent: #35302a;
+    --accent-foreground: #ece8e1;
+    --destructive: #f0707d;
+    --destructive-foreground: #161412;
+    --success: #7dba9c;
+    --success-foreground: #10201a;
+    --success-soft: #1f2e27;
+    --warning: #e9b65a;
+    --warning-soft: #33281a;
+    --warning-border: #6b5326;
+    --info: #8fb0e6;
+    --info-soft: #1e2738;
+    --border: #3a342e;
+    --input: #6e655a;
+    --ring: #8fb0e6;
+    --overlay: rgb(0 0 0 / 0.7);
+    --pigment-almagre: #c0563b;
+    --pigment-ocre: #d9a03a;
+    --pigment-botella: #4f8a6f;
+    --pigment-cobalto: #5b7fc4;
+    --tile-lunch: color-mix(in oklab, var(--pigment-ocre) 22%, var(--card));
+    --tile-dinner: color-mix(in oklab, var(--pigment-cobalto) 22%, var(--card));
+    --chart-1: #c0563b;
+    --chart-2: #d9a03a;
+    --chart-3: #4f8a6f;
+    --chart-4: #5b7fc4;
+    --chart-5: #b5ab9e;
+    --sidebar-background: #0f0e0d;
+    --sidebar-foreground: #dcd6cc;
+    --sidebar-primary: #b5452b;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #2a2622;
+    --sidebar-accent-foreground: #f8f6f2;
+    --sidebar-border: #2a2622;
+    --sidebar-ring: #8fb0e6;
+    --sidebar: #0f0e0d;
 }
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border outline-ring;
+    }
+    html {
+        scrollbar-color: var(--input) transparent;
     }
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground tabular-nums;
+        caret-color: var(--ring);
     }
+    ::selection {
+        background-color: color-mix(in oklab, var(--ring) 28%, transparent);
+    }
+    /* Native controls written directly in pages keep a 44 px touch area on mobile. */
+    @media (width < 40rem) {
+        select,
+        input:not([type='checkbox'], [type='radio'], [type='hidden']),
+        summary {
+            min-height: 2.75rem;
+        }
+        summary {
+            align-content: center;
+        }
+    }
+    /* Fallback for focusable elements without their own focus style. */
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+    /* Reduced motion: dialogs and sheets still fade in and out (the change of state stays
+       visible) but no longer slide or zoom; loading placeholders stop pulsing. Spinners keep
+       turning, as they are the only sign that something is in progress. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        ::before,
+        ::after {
+            --tw-enter-translate-x: 0 !important;
+            --tw-enter-translate-y: 0 !important;
+            --tw-enter-scale: 1 !important;
+            --tw-enter-rotate: 0 !important;
+            --tw-exit-translate-x: 0 !important;
+            --tw-exit-translate-y: 0 !important;
+            --tw-exit-scale: 1 !important;
+            --tw-exit-rotate: 0 !important;
+            scroll-behavior: auto !important;
+        }
+        [data-state][class*='animate-in'],
+        [data-state][class*='animate-out'] {
+            animation-duration: 150ms !important;
+        }
+        .animate-pulse {
+            animation: none;
+        }
+    }
+}
+
+/* Keyboard focus never lands under a sticky bottom bar (WCAG 2.4.11). */
+html:has([data-checked-bar], [data-bottom-bar]) {
+    scroll-padding-bottom: 5.5rem;
+}
+
+/* Inertia's progress bar takes a single colour; the token keeps it in the palette in dark mode. */
+#nprogress .bar {
+    background: var(--primary) !important;
+}
+
+/* A standalone text link is 44 px tall on mobile, so its touch area never overlaps a
+   neighbouring control. */
+@utility tap-target {
+    @media (width < 40rem) {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.75rem;
+    }
+}
+
+/* The display voice: Archivo condensed, for page titles and the week's figures. */
+@utility font-display {
+    font-stretch: 75%;
+    font-weight: 800;
+    letter-spacing: -0.005em;
+    text-transform: uppercase;
 }

@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import { Form } from '@inertiajs/vue3';
-import { Check, Minus, PackageX, Pencil, Plus, Trash2, X } from '@lucide/vue';
+import {
+    Check,
+    Ellipsis,
+    Minus,
+    PackageX,
+    Pencil,
+    Plus,
+    Trash2,
+    X,
+} from '@lucide/vue';
 import { computed, nextTick, ref } from 'vue';
 import IngredientThumb from '@/components/IngredientThumb.vue';
 import InputError from '@/components/InputError.vue';
@@ -15,8 +24,14 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
@@ -39,6 +54,14 @@ const editOpen = ref(false);
 // RN-47: «Se acabó» sets every location of the food to zero, after confirming.
 const depletedOpen = ref(false);
 const deleteOpen = ref(false);
+
+// R4: edit, «Se acabó» and delete live in one actions menu; a dialog opened from it waits for
+// the menu to close and hand the focus back first.
+const dialogs = { edit: editOpen, depleted: depletedOpen, delete: deleteOpen };
+
+function openAfterMenu(dialog: keyof typeof dialogs): void {
+    window.setTimeout(() => (dialogs[dialog].value = true));
+}
 
 // Quick adjustment (USER-FLOWS §3): ± one unit for indivisible units, or type the new amount.
 const adjusting = ref(false);
@@ -67,13 +90,11 @@ const compatibleUnits = computed(() =>
 </script>
 
 <template>
-    <li
-        class="flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-xs transition-colors hover:border-input"
-    >
+    <li class="flex flex-col gap-3 rounded-sm bg-card p-3">
         <div class="flex items-start gap-3">
             <button
                 type="button"
-                class="-m-1 flex min-w-0 flex-1 items-start gap-3 rounded-lg p-1 text-left hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                class="-m-1 flex min-w-0 flex-1 items-start gap-3 rounded-sm p-1 text-left hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                 :aria-label="`Ficha de ${item.ingredient}`"
                 @click="emit('food', item.ingredient_id)"
             >
@@ -82,7 +103,7 @@ const compatibleUnits = computed(() =>
                     :category="item.category"
                 />
                 <span class="grid min-w-0 flex-1">
-                    <span class="truncate font-medium">{{
+                    <span class="truncate font-semibold">{{
                         item.ingredient
                     }}</span>
                     <span
@@ -97,17 +118,45 @@ const compatibleUnits = computed(() =>
                 </span>
             </button>
             <div v-if="!readonly" class="-mt-1 -mr-1 flex shrink-0">
-                <Dialog v-model:open="editOpen">
-                    <DialogTrigger as-child>
+                <DropdownMenu :modal="false">
+                    <DropdownMenuTrigger as-child>
                         <Button
                             variant="ghost"
                             size="icon"
-                            class="size-11 sm:size-9"
+                            class="text-muted-foreground hover:text-foreground"
+                            :aria-label="`Acciones de ${item.ingredient} (${item.location_label})`"
+                        >
+                            <Ellipsis />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" class="min-w-48">
+                        <DropdownMenuItem
                             :aria-label="`Editar las existencias de ${item.ingredient} (${item.location_label})`"
+                            @select="openAfterMenu('edit')"
                         >
                             <Pencil />
-                        </Button>
-                    </DialogTrigger>
+                            Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            :aria-label="`Se acabó: ${item.ingredient}`"
+                            @select="openAfterMenu('depleted')"
+                        >
+                            <PackageX />
+                            Se acabó
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                            variant="destructive"
+                            :aria-label="`Eliminar las existencias de ${item.ingredient} (${item.location_label})`"
+                            @select="openAfterMenu('delete')"
+                        >
+                            <Trash2 />
+                            Eliminar
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Dialog v-model:open="editOpen">
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle
@@ -207,16 +256,6 @@ const compatibleUnits = computed(() =>
                 </Dialog>
 
                 <Dialog v-model:open="deleteOpen">
-                    <DialogTrigger as-child>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            class="size-11 sm:size-9"
-                            :aria-label="`Eliminar las existencias de ${item.ingredient} (${item.location_label})`"
-                        >
-                            <Trash2 />
-                        </Button>
-                    </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle
@@ -292,18 +331,9 @@ const compatibleUnits = computed(() =>
             </p>
         </details>
 
-        <div class="flex items-center justify-between gap-2 border-t pt-3">
+        <!-- The same footer for every unit: − · quantity · + (the steps only for whole units). -->
+        <div class="border-t pt-3">
             <Dialog v-if="!readonly" v-model:open="depletedOpen">
-                <DialogTrigger as-child>
-                    <Button
-                        variant="ghost"
-                        class="min-h-11 px-2 text-muted-foreground sm:min-h-9"
-                        :aria-label="`Se acabó: ${item.ingredient}`"
-                    >
-                        <PackageX />
-                        Se acabó
-                    </Button>
-                </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle
@@ -348,10 +378,9 @@ const compatibleUnits = computed(() =>
                     </Form>
                 </DialogContent>
             </Dialog>
-            <span v-else />
             <p
                 v-if="readonly && item.estimate"
-                class="min-h-11 px-2 text-right tabular-nums sm:min-h-9"
+                class="min-h-11 px-2 text-center tabular-nums sm:min-h-9"
             >
                 <span class="block text-base font-semibold"
                     >≈ {{ item.estimate.display }}
@@ -365,7 +394,7 @@ const compatibleUnits = computed(() =>
             </p>
             <p
                 v-else-if="readonly"
-                class="min-h-11 px-2 text-right text-base font-semibold tabular-nums sm:min-h-9"
+                class="min-h-11 px-2 text-center text-base font-semibold whitespace-nowrap tabular-nums sm:min-h-9"
             >
                 {{ item.quantity }}
                 <span class="font-normal text-muted-foreground">{{
@@ -422,7 +451,11 @@ const compatibleUnits = computed(() =>
                 <InputError :message="errors.quantity" />
             </Form>
 
-            <div v-else class="flex items-center gap-1">
+            <div
+                v-else
+                class="grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-2 sm:grid-cols-[2.25rem_minmax(0,1fr)_2.25rem]"
+            >
+                <span v-if="!stepper" aria-hidden="true" />
                 <Form
                     v-if="stepper"
                     v-bind="adjust.form(item.id)"
@@ -455,7 +488,7 @@ const compatibleUnits = computed(() =>
                 <button
                     v-if="item.estimate"
                     type="button"
-                    class="min-h-11 rounded-md px-2 text-right tabular-nums hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:min-h-9"
+                    class="min-h-11 w-full rounded-md px-2 text-center whitespace-nowrap tabular-nums hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-9"
                     :aria-label="`Corregir la cantidad de ${item.ingredient}: ≈ ${item.estimate.display} previstos, registrado ${item.estimate.registered}`"
                     @click="startAdjusting"
                 >
@@ -472,7 +505,7 @@ const compatibleUnits = computed(() =>
                 <button
                     v-else
                     type="button"
-                    class="min-h-11 rounded-md px-2 text-right text-base font-semibold tabular-nums hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:min-h-9"
+                    class="min-h-11 w-full rounded-md px-2 text-center text-base font-semibold whitespace-nowrap tabular-nums hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:min-h-9"
                     :aria-label="`Ajustar la cantidad de ${item.ingredient}: ${item.quantity} ${item.unit_label}`"
                     @click="startAdjusting"
                 >
@@ -505,6 +538,7 @@ const compatibleUnits = computed(() =>
                         <Plus />
                     </Button>
                 </Form>
+                <span v-if="!stepper" aria-hidden="true" />
             </div>
         </div>
     </li>

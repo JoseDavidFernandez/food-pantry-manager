@@ -254,7 +254,7 @@ const uncategorized = computed(
                     <select
                         id="ingredient-category"
                         v-model="category"
-                        class="h-10 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                        class="h-10 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                     >
                         <option value="">Todas las categorías</option>
                         <option

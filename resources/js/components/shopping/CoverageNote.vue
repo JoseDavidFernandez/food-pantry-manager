@@ -28,7 +28,7 @@ defineProps<{
         data-coverage
     >
         <summary
-            class="flex min-h-11 cursor-pointer items-center rounded outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:min-h-8"
+            class="flex min-h-11 cursor-pointer items-center rounded outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-8"
         >
             <template v-if="notices > 0"
                 >{{ notices === 1 ? '1 aviso' : `${notices} avisos` }} sobre el

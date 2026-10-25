@@ -12,7 +12,11 @@ defineProps<{
 <template>
     <header class="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
         <div class="grid min-w-0 gap-1">
-            <h1 class="text-2xl font-semibold tracking-tight">{{ title }}</h1>
+            <h1
+                class="text-[1.75rem] leading-none font-display text-balance sm:text-3xl"
+            >
+                {{ title }}
+            </h1>
             <p v-if="description" class="text-sm text-muted-foreground">
                 {{ description }}
             </p>

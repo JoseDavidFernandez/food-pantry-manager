@@ -303,6 +303,9 @@ class ShoppingListController extends Controller
             'name' => $item->name,
             'is_generated' => $item->isGenerated(),
             'has_ingredient' => $item->ingredient_id !== null,
+            // Category of the food, so the list groups like the aisles of a shop (R3); read only.
+            'category' => $item->ingredient?->category?->value,
+            'category_label' => $item->ingredient?->category?->label(),
             'quantity' => $quantity?->formattedAmount(),
             'unit' => $item->unit?->value,
             'unit_label' => $quantity !== null ? $item->unit?->label($quantity->amount) : null,

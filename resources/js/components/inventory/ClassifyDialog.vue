@@ -119,7 +119,7 @@ function classify(food: Ingredient, category: string): void {
                             :id="`classify-${food.id}`"
                             :value="food.category ?? ''"
                             :disabled="saving === food.id"
-                            class="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:h-10"
+                            class="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring sm:h-10"
                             @change="
                                 classify(
                                     food,

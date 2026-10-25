@@ -24,7 +24,7 @@ const household = computed(() => page.props.auth.household);
 
 <template>
     <header
-        class="flex h-16 shrink-0 items-center gap-2 border-b border-sidebar-border/70 px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-6 md:px-4"
+        class="flex h-16 shrink-0 items-center gap-2 border-b border-border px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 sm:px-6 md:px-4"
     >
         <div class="flex min-w-0 flex-1 items-center gap-2">
             <SidebarTrigger class="-ml-1 size-11 shrink-0 sm:size-7" />
@@ -35,7 +35,7 @@ const household = computed(() => page.props.auth.household);
         <Link
             v-if="household"
             :href="showHousehold()"
-            class="relative flex max-w-[45%] min-w-0 shrink items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-sm after:absolute after:inset-x-0 after:-inset-y-2 after:content-[''] hover:bg-accent focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none sm:max-w-xs"
+            class="relative flex max-w-[45%] min-w-0 shrink items-center gap-1.5 rounded-md border bg-card px-3 py-1 text-sm shadow-xs after:absolute after:inset-x-0 after:-inset-y-2 after:content-[''] hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:max-w-xs"
             :title="household.name"
             :aria-label="`Hogar: ${household.name}`"
         >

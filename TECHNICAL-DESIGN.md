@@ -60,7 +60,7 @@ El kit se instaló desde su rama `main` (`dev-main`): sus versiones etiquetadas 
 
 | Archivo | Ajuste | Motivo |
 |---|---|---|
-| `.gitignore` | Se quita `/CLAUDE.md` y se añade `.env.testing`. | `CLAUDE.md` debe versionarse; `.env.testing` contendrá credenciales de pruebas. |
+| `.gitignore` | Se añade `.env.testing`. Desde el 2026-10-25 también se ignoran `/CLAUDE.md`, `/.claude/` y `/.impeccable/`. | `.env.testing` contendrá credenciales de pruebas. La configuración de Claude Code e Impeccable se mantiene solo en local (decisión del usuario, 2026-10-25). |
 | `composer.json` | `types:check` → `phpstan analyse --memory-limit=1G`. | Con el `memory_limit` de 128M del PHP CLI, PHPStan agota la memoria en sus procesos paralelos. No se modifica el `php.ini` global. |
 | `vite.config.ts` | `'/*.md'` en `fmt.ignorePatterns`. | `vp check` (oxfmt) revisaba también los documentos Markdown, que no siguen el formato del código. El patrón es de estilo gitignore con raíz en `vite.config.ts`, así que solo excluye los Markdown de la raíz. |
 | `package.json` | `"overrides": { "oxfmt": { "tinypool": "2.1.2" } }` (temporal). | Ver §2.3. |
@@ -202,7 +202,7 @@ Siete comprobaciones satisfactorias:
 ### 7.2 Sesión E2E con Playwright (2026-10-21)
 
 - `npm run test:e2e` (`playwright.config.ts`, pruebas en `e2e/`). Arranca `php artisan serve` en `127.0.0.1:8000` (o reutiliza el que esté en marcha) y usa los assets compilados (`npm run build`; se detiene si hay `public/hot`).
-- **Solo con autorización expresa del usuario en cada sesión** ([CLAUDE.md](CLAUDE.md) › «Excepción: sesiones E2E sobre la base de desarrollo»). Nunca contra producción ni contra una aplicación publicada.
+- **Solo con autorización expresa del usuario en cada sesión**; una autorización anterior no vale para otra sesión. Nunca contra producción ni contra una aplicación publicada.
 - **Base de desarrollo, a propósito:** los datos que crea se quedan para revisarlos en el navegador. No se limpia al terminar, salvo que el usuario lo pida.
 - **Usuario dedicado** `e2e@food-pantry.test`, registrado por la interfaz en la primera ejecución. Su contraseña, exclusiva de desarrollo, se genera en `e2e/.auth/credentials.json` (fuera de Git).
 - **Antes de cada ejecución** (`e2e/global-setup.ts`): comprueba `APP_ENV=local` y la base `food_pantry_manager` (si no, se detiene), y vacía solo el hogar del usuario E2E con `E2eHouseholdResetSeeder`. Primero enumera lo que se borrará; exige que el hogar no tenga otros miembros y que ningún otro hogar use sus ingredientes. Usuario, hogar y membresía se conservan.

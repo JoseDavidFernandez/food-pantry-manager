@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Form } from '@inertiajs/vue3';
+import { Form, usePage } from '@inertiajs/vue3';
 import { Plus, Trash2, X } from '@lucide/vue';
 import { computed, ref, watch } from 'vue';
+import FoldSection from '@/components/FoldSection.vue';
 import ImagePicker from '@/components/ingredients/ImagePicker.vue';
 import FoodRestockSection from '@/components/inventory/FoodRestockSection.vue';
 import FoodUnitsSection from '@/components/inventory/FoodUnitsSection.vue';
@@ -43,6 +44,43 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true });
 const confirmingDelete = ref(false);
+
+// R4: the sheet folds what is not edited every day; each fold shows what it holds, and opens
+// by itself when its form came back with an error.
+const page = usePage();
+const hasErrors = (bag: string) =>
+    Object.keys(
+        ((page.props.errors ?? {}) as Record<string, object>)[bag] ?? {},
+    ).length > 0;
+const unitLabel = (unit: string | null | undefined) =>
+    props.units.find((option) => option.value === unit)?.label ?? unit ?? '';
+const aliasesSummary = computed(() =>
+    (props.food?.aliases.length ?? 0) === 0
+        ? 'Ninguno'
+        : (props.food?.aliases ?? []).map((alias) => alias.alias).join(', '),
+);
+const unitsSummary = computed(() => {
+    const count = props.food?.conversions?.length ?? 0;
+    const conversions =
+        count === 0
+            ? 'Sin equivalencias'
+            : `${count} ${count === 1 ? 'equivalencia' : 'equivalencias'}`;
+
+    return props.food?.purchase_unit
+        ? `${conversions} · se compra en ${unitLabel(props.food.purchase_unit)}`
+        : conversions;
+});
+const restockSummary = computed(() => {
+    const restock = props.food?.restock;
+
+    if (restock?.mode === 'minimum') {
+        return `Al menos ${restock.quantity} ${unitLabel(restock.unit)}`;
+    }
+
+    return restock?.mode === 'once' && restock.display
+        ? `Pendiente de reponer: ${restock.display}`
+        : 'Sin mínimo';
+});
 
 watch(open, (value) => {
     if (!value) {
@@ -183,98 +221,132 @@ const usage = computed(() => {
                 </Button>
             </Form>
 
-            <section
-                class="grid gap-2 border-t pt-4"
-                :aria-labelledby="`food-aliases-${food.id}`"
+            <FoldSection
+                title="Otros nombres"
+                :summary="aliasesSummary"
+                :open="hasErrors(`addAlias${food.id}`)"
             >
-                <h3 :id="`food-aliases-${food.id}`" class="text-sm font-medium">
-                    Otros nombres (alias)
-                </h3>
-                <p class="text-xs text-muted-foreground">
-                    Plurales o sinónimos que se reconocen como este alimento al
-                    escribirlos en el inventario, las recetas o la compra.
-                </p>
-                <div class="flex flex-wrap items-center gap-2">
-                    <Badge
-                        v-for="alias in food.aliases"
-                        :key="alias.id"
-                        variant="secondary"
-                        class="gap-1 overflow-visible pr-1"
-                    >
-                        {{ alias.alias }}
-                        <Form
-                            v-if="!readonly"
-                            v-bind="
-                                destroyAlias.form({
-                                    ingredient: food.id,
-                                    alias: alias.id,
-                                })
-                            "
-                            :options="{ preserveScroll: true }"
-                            class="inline-flex"
-                        >
-                            <button
-                                type="submit"
-                                class="relative rounded-full p-0.5 after:absolute after:-inset-3.5 after:content-[''] hover:bg-muted-foreground/20 sm:after:-inset-1"
-                                :aria-label="`Quitar el alias ${alias.alias}`"
-                            >
-                                <X class="size-3" />
-                            </button>
-                        </Form>
-                    </Badge>
-                    <span
-                        v-if="food.aliases.length === 0"
-                        class="text-sm text-muted-foreground"
-                        >Ninguno</span
-                    >
-                </div>
-                <Form
-                    v-if="!readonly"
-                    v-bind="storeAlias.form(food.id)"
-                    :error-bag="`addAlias${food.id}`"
-                    reset-on-success
-                    :options="{ preserveScroll: true }"
-                    v-slot="{ errors, processing }"
-                    class="grid gap-1"
+                <section
+                    class="grid gap-2"
+                    :aria-labelledby="`food-aliases-${food.id}`"
                 >
-                    <div class="flex gap-2">
-                        <Label :for="`food-alias-${food.id}`" class="sr-only"
-                            >Nuevo alias de {{ food.name }}</Label
+                    <h3 :id="`food-aliases-${food.id}`" class="sr-only">
+                        Otros nombres (alias)
+                    </h3>
+                    <p class="text-xs text-muted-foreground">
+                        Plurales o sinónimos que se reconocen como este alimento
+                        al escribirlos en el inventario, las recetas o la
+                        compra.
+                    </p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <Badge
+                            v-for="alias in food.aliases"
+                            :key="alias.id"
+                            variant="secondary"
+                            class="gap-1 overflow-visible pr-1"
                         >
-                        <Input
-                            class="h-11 sm:h-9"
-                            :id="`food-alias-${food.id}`"
-                            name="alias"
-                            placeholder="Por ejemplo: tomates"
-                            required
-                        />
-                        <Button
-                            class="min-h-11 sm:min-h-0"
-                            type="submit"
-                            variant="outline"
-                            :disabled="processing"
+                            {{ alias.alias }}
+                            <Form
+                                v-if="!readonly"
+                                v-bind="
+                                    destroyAlias.form({
+                                        ingredient: food.id,
+                                        alias: alias.id,
+                                    })
+                                "
+                                :options="{ preserveScroll: true }"
+                                class="inline-flex"
+                            >
+                                <button
+                                    type="submit"
+                                    class="relative rounded-full p-0.5 after:absolute after:-inset-3.5 after:content-[''] hover:bg-muted-foreground/20 sm:after:-inset-1"
+                                    :aria-label="`Quitar el alias ${alias.alias}`"
+                                >
+                                    <X class="size-3" />
+                                </button>
+                            </Form>
+                        </Badge>
+                        <span
+                            v-if="food.aliases.length === 0"
+                            class="text-sm text-muted-foreground"
+                            >Ninguno</span
                         >
-                            <Plus />
-                            Añadir
-                        </Button>
                     </div>
-                    <InputError :message="errors.alias" />
-                </Form>
-            </section>
+                    <Form
+                        v-if="!readonly"
+                        v-bind="storeAlias.form(food.id)"
+                        :error-bag="`addAlias${food.id}`"
+                        reset-on-success
+                        :options="{ preserveScroll: true }"
+                        v-slot="{ errors, processing }"
+                        class="grid gap-1"
+                    >
+                        <div class="flex gap-2">
+                            <Label
+                                :for="`food-alias-${food.id}`"
+                                class="sr-only"
+                                >Nuevo alias de {{ food.name }}</Label
+                            >
+                            <Input
+                                class="h-11 sm:h-9"
+                                :id="`food-alias-${food.id}`"
+                                name="alias"
+                                placeholder="Por ejemplo: tomates"
+                                required
+                            />
+                            <Button
+                                class="min-h-11 sm:min-h-0"
+                                type="submit"
+                                variant="outline"
+                                :disabled="processing"
+                            >
+                                <Plus />
+                                Añadir
+                            </Button>
+                        </div>
+                        <InputError :message="errors.alias" />
+                    </Form>
+                </section>
+            </FoldSection>
 
-            <FoodUnitsSection
-                :food="food"
-                :units="units"
-                :readonly="readonly"
-            />
+            <FoldSection
+                title="Unidades y compra"
+                :summary="unitsSummary"
+                :open="
+                    hasErrors(`conversion${food.id}`) ||
+                    hasErrors(`purchase${food.id}`)
+                "
+            >
+                <FoodUnitsSection
+                    :food="food"
+                    :units="units"
+                    :readonly="readonly"
+                    headless
+                />
+            </FoldSection>
 
-            <FoodRestockSection
-                :food="food"
-                :units="units"
-                :readonly="readonly"
-            />
+            <FoldSection
+                title="Mínimo en casa"
+                :summary="restockSummary"
+                :open="hasErrors(`minimum${food.id}`)"
+            >
+                <FoodRestockSection
+                    :food="food"
+                    :units="units"
+                    :readonly="readonly"
+                    headless
+                />
+            </FoldSection>
 
-            <section v-if="imageSearch && !readonly" class="border-t pt-4">
+            <FoldSection
+                v-if="imageSearch && !readonly"
+                title="Imagen"
+                :summary="
+                    food.image_url
+                        ? 'Con imagen'
+                        : 'Sin imagen: se muestra el icono de su categoría'
+                "
+            >
                 <ImagePicker
                     :key="food.id"
                     :id-prefix="`food-${food.id}`"
@@ -284,7 +356,7 @@ const usage = computed(() => {
                     :image-url="food.image_url"
                     :credit="food.image_credit"
                 />
-            </section>
+            </FoldSection>
 
             <section v-if="!readonly" class="grid gap-2 border-t pt-4">
                 <template v-if="inUse">

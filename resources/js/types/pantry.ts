@@ -177,6 +177,9 @@ export type ShoppingItem = {
     name: string;
     is_generated: boolean;
     has_ingredient: boolean;
+    /** Category of the food (null for free text or an unclassified food), to group the list. */
+    category?: string | null;
+    category_label?: string | null;
     quantity: string | null;
     unit: string | null;
     unit_label: string | null;

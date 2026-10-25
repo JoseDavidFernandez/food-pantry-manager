@@ -73,7 +73,9 @@ const reviewMessage = computed(() => {
 
 <template>
     <li
-        :class="cn('grid grid-cols-1 gap-2 px-4 py-3', inCart && 'bg-muted/40')"
+        :class="
+            cn('grid grid-cols-1 gap-2 bg-card px-4 py-3', inCart && 'bg-muted')
+        "
         :data-in-cart="inCart ? '' : undefined"
     >
         <div class="flex items-start gap-3">
@@ -87,7 +89,7 @@ const reviewMessage = computed(() => {
                 <span
                     :class="
                         cn(
-                            'flex size-7 items-center justify-center rounded-md border-2',
+                            'flex size-7 items-center justify-center rounded-[3px] border-2',
                             item.is_purchased
                                 ? 'border-primary bg-primary text-primary-foreground'
                                 : 'border-input',
@@ -110,12 +112,12 @@ const reviewMessage = computed(() => {
                     :aria-checked="item.is_purchased"
                     :aria-label="`${item.is_purchased ? 'Desmarcar' : 'Marcar'} ${item.name} como comprado`"
                     :disabled="processing"
-                    class="group grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                    class="group grid size-11 place-items-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                     <span
                         :class="
                             cn(
-                                'flex size-7 items-center justify-center rounded-md border-2 transition-colors',
+                                'flex size-7 items-center justify-center rounded-[3px] border-2 transition-colors',
                                 item.is_purchased
                                     ? 'border-primary bg-primary text-primary-foreground'
                                     : 'border-input group-hover:border-primary',
@@ -161,7 +163,7 @@ const reviewMessage = computed(() => {
                     data-calculation
                 >
                     <summary
-                        class="-ml-1 flex min-h-11 w-fit cursor-pointer items-center rounded px-1 outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:min-h-6"
+                        class="-ml-1 flex min-h-11 w-fit cursor-pointer items-center rounded px-1 outline-none focus-visible:ring-2 focus-visible:ring-ring sm:min-h-6"
                     >
                         Ver cálculo
                         <ChevronDown
@@ -208,7 +210,7 @@ const reviewMessage = computed(() => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        class="size-11 sm:size-9"
+                        class="size-11 text-muted-foreground hover:text-foreground sm:size-9"
                         :aria-label="`Editar ${item.name}`"
                     >
                         <Pencil />
@@ -287,7 +289,7 @@ const reviewMessage = computed(() => {
                     <Button
                         variant="ghost"
                         size="icon"
-                        class="size-11 sm:size-9"
+                        class="size-11 text-muted-foreground hover:text-foreground sm:size-9"
                         :aria-label="`Quitar ${item.name} de la lista`"
                     >
                         <Trash2 />
@@ -349,7 +351,6 @@ const reviewMessage = computed(() => {
             class="grid gap-1 pl-10"
         >
             <p class="flex flex-wrap gap-1">
-                <Badge v-if="inCart" variant="secondary">En el carro</Badge>
                 <Badge
                     v-if="item.detail?.restock_mode === 'minimum'"
                     variant="outline"
@@ -369,7 +370,9 @@ const reviewMessage = computed(() => {
                 <Badge v-if="!item.has_ingredient" variant="secondary"
                     >Texto libre</Badge
                 >
-                <Badge v-if="item.is_received">Recibido</Badge>
+                <Badge v-if="item.is_received" variant="success"
+                    >Recibido</Badge
+                >
             </p>
             <p
                 v-if="item.received && !item.is_received"

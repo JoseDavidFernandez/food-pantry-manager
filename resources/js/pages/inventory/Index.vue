@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 import {
     CircleOff,
     LayoutGrid,
@@ -10,6 +10,7 @@ import {
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
 import EmptyState from '@/components/EmptyState.vue';
+import FilterTabs from '@/components/FilterTabs.vue';
 import IngredientThumb from '@/components/IngredientThumb.vue';
 import AddStockDialog from '@/components/inventory/AddStockDialog.vue';
 import ClassifyDialog from '@/components/inventory/ClassifyDialog.vue';
@@ -20,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useHouseholdAccess } from '@/composables/useHouseholdAccess';
-import { cn } from '@/lib/utils';
 import { locationIcon, UNCATEGORIZED } from '@/lib/visuals';
 import { index } from '@/routes/inventory';
 import type {
@@ -249,30 +249,11 @@ function clearFilters(): void {
             </template>
         </PageHeader>
 
-        <nav
-            class="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
-            aria-label="Filtrar por ubicación"
-        >
-            <Link
-                v-for="tab in tabs"
-                :key="tab.label"
-                :href="tab.href"
-                preserve-scroll
-                :aria-current="tab.key === filter ? 'page' : undefined"
-                :class="
-                    cn(
-                        'flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-medium transition-colors',
-                        tab.key === filter
-                            ? 'border-primary bg-primary text-primary-foreground'
-                            : 'bg-card hover:bg-accent',
-                    )
-                "
-            >
-                <component :is="tab.icon" class="size-4" aria-hidden="true" />
-                {{ tab.label }}
-                <span class="tabular-nums opacity-70">{{ tab.count }}</span>
-            </Link>
-        </nav>
+        <FilterTabs
+            label="Filtrar por ubicación"
+            preserve-scroll
+            :tabs="tabs.map((tab) => ({ ...tab, active: tab.key === filter }))"
+        />
 
         <div
             v-if="hasContent"
@@ -303,7 +284,7 @@ function clearFilters(): void {
                 <select
                     id="inventory-category"
                     v-model="category"
-                    class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 sm:h-10"
+                    class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring sm:h-10"
                 >
                     <option value="">Todas las categorías</option>
                     <option
@@ -368,11 +349,11 @@ function clearFilters(): void {
                 <li
                     v-for="f in visibleUnstocked"
                     :key="f.id"
-                    class="flex flex-col gap-3 rounded-xl border bg-card p-3 shadow-xs"
+                    class="flex flex-col gap-3 rounded-sm bg-card p-3"
                 >
                     <button
                         type="button"
-                        class="-m-1 flex min-w-0 items-start gap-3 rounded-lg p-1 text-left hover:bg-accent/60 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                        class="-m-1 flex min-w-0 items-start gap-3 rounded-sm p-1 text-left hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
                         :aria-label="`Ficha de ${f.name}`"
                         @click="openFood(f.id)"
                     >
@@ -381,7 +362,7 @@ function clearFilters(): void {
                             :category="f.category"
                         />
                         <span class="grid min-w-0 flex-1">
-                            <span class="truncate font-medium">{{
+                            <span class="truncate font-semibold">{{
                                 f.name
                             }}</span>
                             <span

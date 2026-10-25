@@ -92,14 +92,18 @@ const itemName = (id: number): string =>
             <strong class="tabular-nums">{{ items.length }}</strong>
             en el carro
         </p>
-        <Button
-            class="min-h-11 sm:min-h-9"
-            :disabled="toStock.length === 0"
-            @click="open = true"
-        >
-            <PackageCheck />
-            Guardar {{ toStock.length }} en casa
-        </Button>
+        <div class="flex items-center gap-2">
+            <!-- R3: the page adds its own bottom-bar actions here (e.g. «Añadir» on mobile). -->
+            <slot name="actions" />
+            <Button
+                class="min-h-11 sm:min-h-9"
+                :disabled="toStock.length === 0"
+                @click="open = true"
+            >
+                <PackageCheck />
+                Guardar {{ toStock.length }} en casa
+            </Button>
+        </div>
     </div>
 
     <Dialog v-model:open="open">

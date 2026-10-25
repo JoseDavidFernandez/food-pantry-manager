@@ -51,6 +51,52 @@ async function openSlot(page: Page, day: string, meal: 'Comida' | 'Cena') {
 }
 
 /**
+ * Opens the actions menu of a stock card («⋯», R4) and chooses one of its options, named as the
+ * buttons were before: «Editar las existencias de Arroz (Despensa)», «Se acabó: Croquetas»…
+ */
+async function stockAction(
+    page: Page,
+    card: RegExp,
+    option: string,
+): Promise<void> {
+    await page.getByRole('button', { name: card }).first().click();
+    await page.getByRole('menuitem', { name: option, exact: true }).click();
+}
+
+/** Opens a folded section of the food sheet (R4) when it is closed. */
+async function openFold(sheet: Locator, title: string): Promise<void> {
+    const fold = sheet.locator('[data-fold]', {
+        has: sheet.page().locator('summary', { hasText: title }),
+    });
+
+    if ((await fold.getAttribute('open')) === null) {
+        await fold.locator('summary').click();
+    }
+}
+
+/**
+ * Opens the actions menu of a planned dish in one lunch or dinner («⋯», R2) and chooses one of
+ * its options, named as the buttons were before: «Mover Arroz con huevo: Miércoles 28 · Comida».
+ */
+async function dishAction(
+    page: Page,
+    verb: string,
+    dish: string,
+    slot: string,
+): Promise<void> {
+    await page
+        .getByRole('button', {
+            name: new RegExp(`^Acciones de ${dish}: ${slot}$`),
+        })
+        .click();
+    await page
+        .getByRole('menuitem', {
+            name: new RegExp(`^${verb} ${dish}: ${slot}$`),
+        })
+        .click();
+}
+
+/**
  * Drags a planned dish by its name, step by step, as a person does: `dragTo` presses on the
  * centre of the card (its action buttons) and moves in one jump, so the drag never starts.
  */
@@ -255,11 +301,11 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         await expect(freezer).toContainText('Pescado y marisco');
 
         // Without stock, a food stays in the catalog and moves to «Sin existencias».
-        await page
-            .getByRole('button', {
-                name: 'Eliminar las existencias de Pan (Despensa)',
-            })
-            .click();
+        await stockAction(
+            page,
+            /^Acciones de Pan \(Despensa\)$/,
+            'Eliminar las existencias de Pan (Despensa)',
+        );
         await page
             .getByRole('dialog')
             .getByRole('button', { name: 'Eliminar existencias' })
@@ -281,11 +327,15 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
 
         // Explicit alias «Huevo» → Huevos, and a duplicate rejected (RN-03).
         await page.getByRole('button', { name: 'Ficha de Huevos' }).click();
+        await openFold(sheet, 'Otros nombres');
         await sheet.getByLabel('Nuevo alias de Huevos').fill('Huevo');
         await sheet
             .getByRole('button', { name: 'Añadir', exact: true })
             .click();
-        await expect(sheet.getByText('Huevo', { exact: true })).toBeVisible();
+        // The alias shows as a chip and in the summary of its folded section.
+        await expect(
+            sheet.getByText('Huevo', { exact: true }).first(),
+        ).toBeVisible();
         await sheet.getByLabel('Nombre', { exact: true }).fill('  ARRÓZ ');
         await sheet.getByRole('button', { name: 'Guardar cambios' }).click();
         await expect(
@@ -352,11 +402,11 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         await page.getByLabel('Filtrar por categoría').selectOption('');
 
         // Full edit of the stock: 500 g → 200 g.
-        await page
-            .getByRole('button', {
-                name: 'Editar las existencias de Arroz (Despensa)',
-            })
-            .click();
+        await stockAction(
+            page,
+            /^Acciones de Arroz \(Despensa\)$/,
+            'Editar las existencias de Arroz (Despensa)',
+        );
         const dialog = page.getByRole('dialog');
         await dialog.getByLabel('Cantidad', { exact: true }).fill('200');
         await dialog.getByRole('button', { name: 'Guardar cambios' }).click();
@@ -567,7 +617,10 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
 
         // Reorder within the dinner.
         await slot('Martes', 'cena')
-            .getByRole('button', { name: 'Subir Arroz con huevo' })
+            .getByRole('button', { name: /^Acciones de Arroz con huevo: / })
+            .click();
+        await page
+            .getByRole('menuitem', { name: 'Subir Arroz con huevo' })
             .click();
         await expect(slot('Martes', 'cena')).toHaveAccessibleName(
             /: Arroz con huevo, Sandwich Mixto$/,
@@ -591,11 +644,12 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         );
 
         // «Mover» does the same without dragging.
-        await page
-            .getByRole('button', {
-                name: /^Mover Arroz con huevo: Miércoles \d+ · Comida$/,
-            })
-            .click();
+        await dishAction(
+            page,
+            'Mover',
+            'Arroz con huevo',
+            'Miércoles \\d+ · Comida',
+        );
         const moveDialog = page.getByRole('dialog');
         await moveDialog.getByLabel('Mover a').selectOption('5-dinner');
         await moveDialog.getByRole('button', { name: 'Mover' }).click();
@@ -605,11 +659,12 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         );
 
         // Remove it so the totals below stay as planned.
-        await page
-            .getByRole('button', {
-                name: /^Retirar Arroz con huevo: Viernes \d+ · Cena$/,
-            })
-            .click();
+        await dishAction(
+            page,
+            'Retirar',
+            'Arroz con huevo',
+            'Viernes \\d+ · Cena',
+        );
         await page
             .getByRole('dialog')
             .getByRole('button', { name: 'Retirar plato' })
@@ -948,6 +1003,7 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         await page.getByRole('link', { name: /Sin existencias/ }).click();
         await page.getByRole('button', { name: 'Ficha de Croquetas' }).click();
         const sheet = page.getByRole('dialog');
+        await openFold(sheet, 'Unidades y compra');
         await sheet
             .getByRole('group', { name: 'Nueva equivalencia' })
             .getByLabel('Unidad', { exact: true })
@@ -1053,6 +1109,7 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
             .getByRole('button', { name: 'Ficha de Leche evaporada' })
             .click();
         const food = page.getByRole('dialog');
+        await openFold(food, 'Mínimo en casa');
         await food.getByLabel('Al menos').fill('300');
         await food
             .locator('[data-restock]')
@@ -1064,7 +1121,11 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
 
         // … and «Se acabó» for the croquetas: every location to zero, after confirming; asked
         // for once (the last purchase, 3 bags = 60) with the 25 of the recipe: 85 → 5 bags.
-        await page.getByRole('button', { name: 'Se acabó: Croquetas' }).click();
+        await stockAction(
+            page,
+            /^Acciones de Croquetas /,
+            'Se acabó: Croquetas',
+        );
         await page
             .getByRole('dialog')
             .getByRole('button', { name: 'Sí, se acabó' })
@@ -1189,7 +1250,12 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         // The weekly grid of the planned week shows its dishes.
         await navigate(page, 'Menú');
         await nextWeek(page);
+        // On mobile the week is a strip of days with one day open (R2): Monday, then Tuesday.
         await expect(page.getByText('Arroz con huevo').first()).toBeVisible();
+        await page
+            .getByRole('navigation', { name: 'Elegir día' })
+            .getByRole('button', { name: /^Martes / })
+            .click();
         await expect(page.getByText('Sandwich Mixto').first()).toBeVisible();
 
         // The grid is also usable to plan on mobile: the week after (the planned one stays for
@@ -1209,7 +1275,7 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         await expect(page.getByRole('dialog')).toHaveCount(0);
         await expect(
             page.getByRole('button', {
-                name: /Cambiar Arroz con huevo: Lunes \d+ · Comida/,
+                name: /Acciones de Arroz con huevo: Lunes \d+ · Comida/,
             }),
         ).toBeVisible();
         // Nothing sticks out of its calendar cell (e.g. the actions of a planned dish).
@@ -1240,11 +1306,12 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         );
         await screenshot(page, '17-movil-menu-planificar');
 
-        await page
-            .getByRole('button', {
-                name: /Retirar Arroz con huevo: Lunes \d+ · Comida/,
-            })
-            .click();
+        await dishAction(
+            page,
+            'Retirar',
+            'Arroz con huevo',
+            'Lunes \\d+ · Comida',
+        );
         await page
             .getByRole('dialog')
             .getByRole('button', { name: 'Retirar plato' })
@@ -1267,6 +1334,7 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         await page.waitForLoadState('networkidle');
         await page.getByRole('button', { name: 'Ficha de Croquetas' }).click();
         const sheet = page.getByRole('dialog');
+        await openFold(sheet, 'Unidades y compra');
         const remove = sheet.getByRole('button', {
             name: 'Quitar la equivalencia 1 bolsa = 20 unidades',
         });
@@ -1288,10 +1356,18 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
 
         await navigate(page, 'Menú');
         await nextWeek(page);
+        // The croquetas are on Thursday's dinner: open that day in the strip (R2).
+        await page
+            .getByRole('navigation', { name: 'Elegir día' })
+            .getByRole('button', { name: /^Jueves / })
+            .click();
         const choose = page.getByRole('button', {
             name: /entre Nata o Leche evaporada: Croquetas con salsa/,
         });
-        await choose.scrollIntoViewIfNeeded();
+        // Centred, so a toast at the bottom edge never covers the area being measured.
+        await choose.evaluate((element) =>
+            element.scrollIntoView({ block: 'center' }),
+        );
         expect(await touchSize(choose)).toMatchObject({ height: 44 });
         await choose.click();
         await expect(page.getByRole('dialog')).toBeVisible();

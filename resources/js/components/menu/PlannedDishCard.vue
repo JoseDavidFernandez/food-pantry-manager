@@ -6,6 +6,7 @@ import {
     ArrowUp,
     CircleAlert,
     CircleSlash,
+    Ellipsis,
     GripVertical,
     Pencil,
     RotateCcw,
@@ -24,8 +25,14 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { DISH_MIME } from '@/lib/menuDrag';
@@ -35,8 +42,9 @@ import { destroy, eaten, move, position } from '@/routes/menu/dishes';
 import type { PlannedDish, RecipeOption, UnitOption } from '@/types/pantry';
 
 /**
- * One dish of a lunch or dinner (RN-16): change, move to another slot, reorder within its slot,
- * «No comido» (RN-37) and remove. Dragging it onto another slot moves it there.
+ * One dish of a lunch or dinner (RN-16), as a row of its tile: change, move to another slot,
+ * reorder within its slot, «No comido» (RN-37) and remove, all from one actions menu with text
+ * labels. Dragging it onto another slot moves it there (pointer devices).
  */
 const props = defineProps<{
     dish: PlannedDish;
@@ -54,6 +62,7 @@ const props = defineProps<{
     editable: boolean;
 }>();
 
+const changeOpen = ref(false);
 const moveOpen = ref(false);
 const removeOpen = ref(false);
 const moveTarget = ref('');
@@ -93,6 +102,17 @@ function moveTo(): void {
     }
 }
 
+// A dialog opened from a menu item waits for the menu to close and hand focus back first.
+const dialogs = { change: changeOpen, move: moveOpen, remove: removeOpen };
+
+function openAfterMenu(dialog: keyof typeof dialogs): void {
+    if (dialog === 'move') {
+        moveTarget.value = '';
+    }
+
+    window.setTimeout(() => (dialogs[dialog].value = true));
+}
+
 const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings === 1 ? 'ración' : 'raciones'}${props.dish.not_eaten ? ', no comido' : ''}`;
 </script>
 
@@ -103,7 +123,7 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
         :aria-label="label"
         :class="
             cn(
-                'grid min-w-0 gap-1 rounded-md border bg-card p-2',
+                'grid min-w-0 gap-1 py-2 first:pt-0 last:pb-0',
                 editable && 'cursor-grab active:cursor-grabbing',
             )
         "
@@ -113,23 +133,91 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
             <!-- The handle lets the pointer through: a drag starting on an SVG never starts. -->
             <GripVertical
                 v-if="editable"
-                class="pointer-events-none mt-0.5 size-3.5 shrink-0 text-muted-foreground"
+                class="pointer-events-none mt-0.5 size-3.5 shrink-0 text-foreground/60 pointer-coarse:hidden"
                 aria-hidden="true"
             />
             <p
                 :class="
                     cn(
-                        'min-w-0 flex-1 leading-snug font-medium break-words',
-                        dish.not_eaten && 'text-muted-foreground line-through',
+                        'min-w-0 flex-1 leading-snug font-semibold break-words',
+                        dish.not_eaten && 'text-foreground/70 line-through',
                     )
                 "
             >
                 {{ dish.name }}
             </p>
+
+            <DropdownMenu v-if="editable" :modal="false">
+                <DropdownMenuTrigger as-child>
+                    <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        class="-my-1 -mr-1 shrink-0 hover:bg-foreground/10"
+                        :disabled="busy"
+                        :aria-label="`Acciones de ${dish.name}: ${slotTitle}`"
+                    >
+                        <Ellipsis />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" class="min-w-48">
+                    <DropdownMenuItem
+                        :aria-label="`Cambiar ${dish.name}: ${slotTitle}`"
+                        @select="openAfterMenu('change')"
+                    >
+                        <Pencil />
+                        Cambiar
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                        :aria-label="`Mover ${dish.name}: ${slotTitle}`"
+                        @select="openAfterMenu('move')"
+                    >
+                        <ArrowLeftRight />
+                        Mover
+                    </DropdownMenuItem>
+                    <template v-if="count > 1">
+                        <DropdownMenuItem
+                            :disabled="index === 0"
+                            :aria-label="`Subir ${dish.name}`"
+                            @select="reorder('up')"
+                        >
+                            <ArrowUp />
+                            Subir
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                            :disabled="index === count - 1"
+                            :aria-label="`Bajar ${dish.name}`"
+                            @select="reorder('down')"
+                        >
+                            <ArrowDown />
+                            Bajar
+                        </DropdownMenuItem>
+                    </template>
+                    <DropdownMenuItem
+                        :aria-label="`${dish.not_eaten ? 'Volver a pendiente' : 'Marcar como no comido'}: ${dish.name}`"
+                        @select="setEaten(dish.not_eaten)"
+                    >
+                        <component
+                            :is="dish.not_eaten ? RotateCcw : CircleSlash"
+                        />
+                        {{
+                            dish.not_eaten
+                                ? 'Volver a pendiente'
+                                : 'Marcar como no comido'
+                        }}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                        variant="destructive"
+                        :aria-label="`Retirar ${dish.name}: ${slotTitle}`"
+                        @select="openAfterMenu('remove')"
+                    >
+                        <Trash2 />
+                        Retirar
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
-        <p
-            class="flex flex-wrap items-center gap-1 text-xs text-muted-foreground"
-        >
+        <p class="flex flex-wrap items-center gap-1 text-xs text-foreground/75">
             {{ dish.servings }}
             {{ dish.servings === 1 ? 'ración' : 'raciones' }} ·
             {{ dish.type === 'recipe' ? 'Receta' : 'Plato sencillo' }}
@@ -152,17 +240,14 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
             :alternative="alternative"
             :editable="editable"
         />
-        <Badge
-            v-if="dish.not_eaten"
-            variant="outline"
-            class="gap-1 self-start border-warning-border bg-warning-soft"
-        >
-            <CircleSlash class="size-3" aria-hidden="true" />
+        <Badge v-if="dish.not_eaten" variant="warning" class="self-start">
+            <CircleSlash aria-hidden="true" />
             No comido
         </Badge>
 
-        <div v-if="editable" class="flex flex-wrap items-center gap-0.5">
+        <template v-if="editable">
             <DishDialog
+                v-model:open="changeOpen"
                 :week="week"
                 :day="day"
                 :meal="meal"
@@ -172,54 +257,9 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
                 :units="units"
                 :suggestions="suggestions"
                 :id-prefix="`dish-${dish.id}`"
-            >
-                <template #trigger>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        class="size-11 sm:size-8"
-                        :aria-label="`Cambiar ${dish.name}: ${slotTitle}`"
-                    >
-                        <Pencil />
-                    </Button>
-                </template>
-            </DishDialog>
-
-            <Button
-                v-if="count > 1"
-                variant="ghost"
-                size="icon-sm"
-                class="size-11 sm:size-8"
-                :disabled="busy || index === 0"
-                :aria-label="`Subir ${dish.name}`"
-                @click="reorder('up')"
-            >
-                <ArrowUp />
-            </Button>
-            <Button
-                v-if="count > 1"
-                variant="ghost"
-                size="icon-sm"
-                class="size-11 sm:size-8"
-                :disabled="busy || index === count - 1"
-                :aria-label="`Bajar ${dish.name}`"
-                @click="reorder('down')"
-            >
-                <ArrowDown />
-            </Button>
+            />
 
             <Dialog v-model:open="moveOpen">
-                <DialogTrigger as-child>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        class="size-11 sm:size-8"
-                        :aria-label="`Mover ${dish.name}: ${slotTitle}`"
-                        @click="moveTarget = ''"
-                    >
-                        <ArrowLeftRight />
-                    </Button>
-                </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Mover «{{ dish.name }}»</DialogTitle>
@@ -236,7 +276,7 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
                                 :id="`dish-${dish.id}-move`"
                                 v-model="moveTarget"
                                 required
-                                class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                class="h-10 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 <option value="" disabled>
                                     Elige día y comida
@@ -272,28 +312,7 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
                 </DialogContent>
             </Dialog>
 
-            <Button
-                variant="ghost"
-                size="icon-sm"
-                class="size-11 sm:size-8"
-                :disabled="busy"
-                :aria-label="`${dish.not_eaten ? 'Volver a pendiente' : 'Marcar como no comido'}: ${dish.name}`"
-                @click="setEaten(dish.not_eaten)"
-            >
-                <component :is="dish.not_eaten ? RotateCcw : CircleSlash" />
-            </Button>
-
             <Dialog v-model:open="removeOpen">
-                <DialogTrigger as-child>
-                    <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        class="size-11 sm:size-8"
-                        :aria-label="`Retirar ${dish.name}: ${slotTitle}`"
-                    >
-                        <Trash2 />
-                    </Button>
-                </DialogTrigger>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>¿Retirar «{{ dish.name }}»?</DialogTitle>
@@ -326,6 +345,6 @@ const label = `${props.dish.name}, ${props.dish.servings} ${props.dish.servings 
                     </Form>
                 </DialogContent>
             </Dialog>
-        </div>
+        </template>
     </li>
 </template>

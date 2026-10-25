@@ -6,7 +6,10 @@ import {
     History,
     PackageCheck,
     Plus,
+    ShoppingBasket,
+    ShoppingCart,
 } from '@lucide/vue';
+import type { Component } from 'vue';
 import { computed, ref } from 'vue';
 import InputError from '@/components/InputError.vue';
 import NativeSelect from '@/components/NativeSelect.vue';
@@ -29,6 +32,7 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { useHouseholdAccess } from '@/composables/useHouseholdAccess';
 import { cn } from '@/lib/utils';
+import { CATEGORY_ORDER, categoryIcon } from '@/lib/visuals';
 import { show as showMenu } from '@/routes/menu';
 import { period as periodRoute } from '@/routes/shopping-list';
 import { index as history } from '@/routes/shopping-lists';
@@ -99,6 +103,60 @@ const inCart = computed(() =>
 const toReview = computed(
     () => props.items.filter((item) => item.needs_review).length,
 );
+
+// R3: what is still to buy, grouped like the aisles of a shop (the catalog order of the
+// categories), then foods without a category and free text; then what is in the cart and what
+// is already at home. The server's order (by name) is kept inside each group.
+type ItemGroup = {
+    key: string;
+    label: string;
+    icon: Component;
+    items: ShoppingItem[];
+};
+
+const groups = computed<ItemGroup[]>(() => {
+    const toBuy = props.items.filter(
+        (item) => !item.is_purchased && !item.is_received,
+    );
+    const byCategory = (category: string) =>
+        toBuy.filter((item) => item.category === category);
+    const aisles = CATEGORY_ORDER.map((category) => ({
+        key: category,
+        label: byCategory(category)[0]?.category_label ?? category,
+        icon: categoryIcon(category),
+        items: byCategory(category),
+    }));
+
+    return [
+        ...aisles,
+        {
+            key: 'none',
+            label: 'Sin clasificar',
+            icon: categoryIcon(null),
+            items: toBuy.filter(
+                (item) => !item.category && item.has_ingredient,
+            ),
+        },
+        {
+            key: 'free',
+            label: 'Otros artículos',
+            icon: ShoppingBasket,
+            items: toBuy.filter((item) => !item.has_ingredient),
+        },
+        {
+            key: 'cart',
+            label: 'En el carro',
+            icon: ShoppingCart,
+            items: inCart.value,
+        },
+        {
+            key: 'received',
+            label: 'Ya en casa',
+            icon: PackageCheck,
+            items: props.items.filter((item) => item.is_received),
+        },
+    ].filter((group) => group.items.length > 0);
+});
 
 const { canWrite } = useHouseholdAccess();
 const start = ref(props.list.start);
@@ -212,7 +270,7 @@ function useSuggestion(name: string): void {
                                 "
                                 :class="
                                     cn(
-                                        'flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors',
+                                        'flex min-h-11 items-center rounded-md border px-4 text-sm font-medium transition-colors',
                                         list.days === days
                                             ? 'border-primary bg-primary text-primary-foreground'
                                             : 'bg-card hover:bg-accent',
@@ -259,16 +317,17 @@ function useSuggestion(name: string): void {
                     </DialogContent>
                 </Dialog>
 
+                <!-- On mobile «Añadir» lives in the bottom bar, within reach of the thumb. -->
+                <Button
+                    v-if="list.active && canWrite"
+                    variant="outline"
+                    class="ml-auto max-sm:hidden"
+                    @click="addOpen = true"
+                >
+                    <Plus />
+                    Añadir
+                </Button>
                 <Dialog v-if="list.active && canWrite" v-model:open="addOpen">
-                    <DialogTrigger as-child>
-                        <Button
-                            variant="outline"
-                            class="ml-auto min-h-11 sm:min-h-9"
-                        >
-                            <Plus />
-                            Añadir
-                        </Button>
-                    </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>Añadir a la lista</DialogTitle>
@@ -405,16 +464,42 @@ function useSuggestion(name: string): void {
             No necesitas comprar nada en este periodo.
         </p>
 
-        <ul v-else class="divide-y rounded-xl border">
-            <ShoppingItemRow
-                v-for="item in items"
-                :key="item.id"
-                :list-id="list.id"
-                :item="item"
-                :units="units"
-                :readonly="!list.active || !canWrite"
-            />
-        </ul>
+        <div v-else class="grid gap-5">
+            <section
+                v-for="group in groups"
+                :key="group.key"
+                class="grid gap-2"
+                :aria-labelledby="`aisle-${group.key}`"
+                :data-aisle="group.key"
+            >
+                <h2
+                    :id="`aisle-${group.key}`"
+                    class="flex items-center gap-2 text-xs font-bold tracking-wide uppercase"
+                >
+                    <span
+                        class="grid size-6 place-items-center rounded-sm bg-secondary"
+                        aria-hidden="true"
+                    >
+                        <component :is="group.icon" class="size-3.5" />
+                    </span>
+                    {{ group.label }}
+                    <span class="font-semibold text-muted-foreground">{{
+                        group.items.length
+                    }}</span>
+                </h2>
+                <!-- Rows as tiles on the joints' ground, as in the menu. -->
+                <ul class="grid gap-px overflow-hidden rounded-md bg-border">
+                    <ShoppingItemRow
+                        v-for="item in group.items"
+                        :key="item.id"
+                        :list-id="list.id"
+                        :item="item"
+                        :units="units"
+                        :readonly="!list.active || !canWrite"
+                    />
+                </ul>
+            </section>
+        </div>
 
         <p
             v-if="list.dismissed_count > 0"
@@ -435,11 +520,11 @@ function useSuggestion(name: string): void {
 
         <details
             v-if="receptions.length > 0"
-            class="group rounded-xl border px-4"
+            class="group border-y"
             data-receptions
         >
             <summary
-                class="flex min-h-11 cursor-pointer items-center text-sm font-semibold outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                class="flex min-h-11 cursor-pointer items-center text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
                 Compras registradas ({{ receptions.length }})
                 <ChevronDown
@@ -447,11 +532,11 @@ function useSuggestion(name: string): void {
                     aria-hidden="true"
                 />
             </summary>
-            <ul class="grid gap-3 pb-4">
+            <ul class="grid divide-y pb-2">
                 <li
                     v-for="reception in receptions"
                     :key="reception.id"
-                    class="rounded-lg border p-3 text-sm"
+                    class="py-3 text-sm"
                 >
                     <p class="font-medium">{{ reception.confirmed_at }}</p>
                     <ul class="mt-1 grid gap-0.5">
@@ -475,41 +560,48 @@ function useSuggestion(name: string): void {
             </ul>
         </details>
 
-        <div class="grid gap-3 border-t pt-4 text-sm text-muted-foreground">
-            <p v-if="list.active && canWrite">
-                Para lo que no estaba en la lista o para decidir línea a línea,
-                usa «Registrar compra».
-            </p>
-            <div class="flex flex-wrap gap-2">
-                <Button
-                    v-if="list.active && canWrite"
-                    variant="outline"
-                    class="min-h-11 sm:min-h-9"
-                    as-child
-                >
-                    <Link :href="newReception(list.id)">
-                        <PackageCheck />
-                        Registrar compra
-                    </Link>
-                </Button>
-                <Button variant="outline" class="min-h-11 sm:min-h-9" as-child>
-                    <Link :href="showMenu()">
-                        <CalendarDays />
-                        Ver menú
-                    </Link>
-                </Button>
-                <Button
-                    v-if="historyCount > 0 || !list.active"
-                    variant="outline"
-                    class="min-h-11 sm:min-h-9"
-                    as-child
-                >
-                    <Link :href="history()">
-                        <History />
-                        Historial
-                    </Link>
-                </Button>
-            </div>
+        <nav
+            class="flex flex-wrap items-center gap-2 border-t pt-4"
+            aria-label="Más de la compra"
+        >
+            <Button
+                v-if="list.active && canWrite"
+                variant="outline"
+                as-child
+                title="Para lo que no estaba en la lista o para decidir línea a línea"
+            >
+                <Link :href="newReception(list.id)">
+                    <PackageCheck />
+                    Registrar compra
+                </Link>
+            </Button>
+            <Button variant="ghost" as-child>
+                <Link :href="showMenu()">
+                    <CalendarDays />
+                    Ver menú
+                </Link>
+            </Button>
+            <Button
+                v-if="historyCount > 0 || !list.active"
+                variant="ghost"
+                as-child
+            >
+                <Link :href="history()">
+                    <History />
+                    Historial
+                </Link>
+            </Button>
+        </nav>
+
+        <div
+            v-if="list.active && canWrite && inCart.length === 0"
+            data-bottom-bar
+            class="sticky bottom-0 z-10 -mx-4 border-t bg-background/95 px-4 py-3 backdrop-blur sm:hidden"
+        >
+            <Button variant="outline" class="w-full" @click="addOpen = true">
+                <Plus />
+                Añadir
+            </Button>
         </div>
 
         <ReceiveCheckedSheet
@@ -519,6 +611,17 @@ function useSuggestion(name: string): void {
             :items="inCart"
             :units="units"
             :locations="locations"
-        />
+        >
+            <template #actions>
+                <Button
+                    variant="outline"
+                    class="sm:hidden"
+                    @click="addOpen = true"
+                >
+                    <Plus />
+                    Añadir
+                </Button>
+            </template>
+        </ReceiveCheckedSheet>
     </div>
 </template>

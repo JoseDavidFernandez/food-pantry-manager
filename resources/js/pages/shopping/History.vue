@@ -48,11 +48,11 @@ defineOptions({
             title="Aún no tienes listas."
         />
 
-        <ul v-else class="divide-y rounded-xl border bg-card">
+        <ul v-else class="grid gap-px overflow-hidden rounded-md bg-border">
             <li v-for="list in lists" :key="list.id">
                 <Link
                     :href="show(list.id)"
-                    class="flex items-center gap-3 px-4 py-3 hover:bg-accent/40 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+                    class="flex items-center gap-3 bg-card px-4 py-3 hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
                 >
                     <span class="grid min-w-0 flex-1 gap-1">
                         <span class="font-medium break-words">{{
@@ -61,7 +61,9 @@ defineOptions({
                         <span
                             class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
                         >
-                            <Badge v-if="list.active">Actual</Badge>
+                            <Badge v-if="list.active" variant="info"
+                                >Actual</Badge
+                            >
                             <Badge
                                 v-else-if="list.kind === 'weekly'"
                                 variant="outline"

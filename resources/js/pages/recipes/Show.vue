@@ -3,6 +3,7 @@ import { Form, Head, Link } from '@inertiajs/vue3';
 import {
     Archive,
     ArchiveRestore,
+    ChevronRight,
     Minus,
     Pencil,
     Plus,
@@ -77,7 +78,7 @@ const servingsHref = (servings: number) =>
 <template>
     <Head :title="recipe.name" />
 
-    <div class="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-6">
+    <div class="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-6">
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="grid gap-1">
                 <Heading
@@ -178,157 +179,218 @@ const servingsHref = (servings: number) =>
             </div>
         </div>
 
-        <section class="grid gap-3">
-            <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="font-medium">Ingredientes</h2>
-                <div
-                    class="flex items-center gap-2 text-sm"
-                    aria-label="Raciones"
-                >
-                    <span class="text-muted-foreground">Ver para</span>
-                    <Button
-                        variant="outline"
-                        size="icon-sm"
-                        as-child
-                        :disabled="servings <= 1"
-                    >
-                        <Link
-                            :href="servingsHref(Math.max(1, servings - 1))"
-                            preserve-scroll
-                            aria-label="Una ración menos"
-                        >
-                            <Minus />
-                        </Link>
-                    </Button>
-                    <span class="w-20 text-center font-semibold tabular-nums">
-                        {{ servings }}
-                        {{ servings === 1 ? 'ración' : 'raciones' }}
-                    </span>
-                    <Button variant="outline" size="icon-sm" as-child>
-                        <Link
-                            :href="servingsHref(Math.min(100, servings + 1))"
-                            preserve-scroll
-                            aria-label="Una ración más"
-                        >
-                            <Plus />
-                        </Link>
-                    </Button>
-                </div>
-            </div>
-
-            <p
-                v-if="ingredients.length === 0 && components.length === 0"
-                class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"
-            >
-                Esta receta todavía no tiene ingredientes. Añádelos antes de
-                cerrar un menú que la use.
-            </p>
-            <ul
-                v-else-if="ingredients.length > 0"
-                class="divide-y rounded-xl border"
-            >
-                <li
-                    v-for="(line, lineIndex) in ingredients"
-                    :key="line.ingredient + line.quantity"
-                    :class="[
-                        'flex items-baseline justify-between gap-3 px-4 py-2',
-                        isAlternative(lineIndex) &&
-                            'border-l-4 border-l-primary bg-accent/40',
-                    ]"
-                >
-                    <span>
-                        <span
-                            v-if="isAlternative(lineIndex)"
-                            class="mr-1 text-xs font-medium text-primary uppercase"
-                            >o bien</span
-                        >
-                        {{ line.ingredient }}
-                        <span
-                            v-if="line.note"
-                            class="text-sm text-muted-foreground"
-                        >
-                            ({{ line.note }})
-                        </span>
-                    </span>
-                    <span class="font-semibold tabular-nums">{{
-                        line.quantity
-                    }}</span>
-                </li>
-            </ul>
-        </section>
-
-        <p
-            v-if="ingredients.some((line) => line.alternative_group !== null)"
-            class="-mt-3 text-sm text-muted-foreground"
+        <!-- R5: what to buy and cook with on the left; how to cook it on the right. -->
+        <div
+            class="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)]"
         >
-            Las líneas con «o bien» son alternativas: se usa solo una. Al
-            planificar se propone la que tengas en casa y puedes cambiarla en
-            cada plato.
-        </p>
+            <div class="grid gap-6">
+                <section class="grid gap-3">
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-2"
+                    >
+                        <h2 class="text-sm font-bold tracking-wide uppercase">
+                            Ingredientes
+                        </h2>
+                        <div
+                            class="flex items-center gap-2 text-sm"
+                            aria-label="Raciones"
+                        >
+                            <span class="text-muted-foreground">Ver para</span>
+                            <Button
+                                variant="outline"
+                                size="icon-sm"
+                                as-child
+                                :disabled="servings <= 1"
+                            >
+                                <Link
+                                    :href="
+                                        servingsHref(Math.max(1, servings - 1))
+                                    "
+                                    preserve-scroll
+                                    aria-label="Una ración menos"
+                                >
+                                    <Minus />
+                                </Link>
+                            </Button>
+                            <span
+                                class="w-20 text-center font-semibold tabular-nums"
+                            >
+                                {{ servings }}
+                                {{ servings === 1 ? 'ración' : 'raciones' }}
+                            </span>
+                            <Button variant="outline" size="icon-sm" as-child>
+                                <Link
+                                    :href="
+                                        servingsHref(
+                                            Math.min(100, servings + 1),
+                                        )
+                                    "
+                                    preserve-scroll
+                                    aria-label="Una ración más"
+                                >
+                                    <Plus />
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
 
-        <section v-if="components.length > 0" class="grid gap-3">
-            <h2 class="font-medium">Preparaciones incluidas</h2>
-            <ul class="divide-y rounded-xl border">
-                <li
-                    v-for="component in components"
-                    :key="component.id"
-                    class="flex items-baseline justify-between gap-3 px-4 py-2"
+                    <p
+                        v-if="
+                            ingredients.length === 0 && components.length === 0
+                        "
+                        class="rounded-md bg-muted p-6 text-center text-sm text-muted-foreground"
+                    >
+                        Esta receta todavía no tiene ingredientes. Añádelos
+                        antes de cerrar un menú que la use.
+                    </p>
+                    <ul
+                        v-else-if="ingredients.length > 0"
+                        class="grid gap-px overflow-hidden rounded-md bg-border"
+                    >
+                        <li
+                            v-for="(line, lineIndex) in ingredients"
+                            :key="line.ingredient + line.quantity"
+                            :class="[
+                                'flex items-baseline justify-between gap-3 px-4 py-2.5',
+                                isAlternative(lineIndex)
+                                    ? 'bg-muted'
+                                    : 'bg-card',
+                            ]"
+                        >
+                            <span>
+                                <Badge
+                                    v-if="isAlternative(lineIndex)"
+                                    variant="outline"
+                                    class="mr-1.5 align-middle"
+                                    >o bien</Badge
+                                >
+                                {{ line.ingredient }}
+                                <span
+                                    v-if="line.note"
+                                    class="text-sm text-muted-foreground"
+                                >
+                                    ({{ line.note }})
+                                </span>
+                            </span>
+                            <span class="font-semibold tabular-nums">{{
+                                line.quantity
+                            }}</span>
+                        </li>
+                    </ul>
+                </section>
+
+                <p
+                    v-if="
+                        ingredients.some(
+                            (line) => line.alternative_group !== null,
+                        )
+                    "
+                    class="-mt-3 text-sm text-muted-foreground"
                 >
-                    <Link
-                        :href="show(component.id)"
-                        class="font-medium underline-offset-4 hover:underline"
+                    Las líneas con «o bien» son alternativas: se usa solo una.
+                    Al planificar se propone la que tengas en casa y puedes
+                    cambiarla en cada plato.
+                </p>
+
+                <section v-if="components.length > 0" class="grid gap-3">
+                    <h2 class="text-sm font-bold tracking-wide uppercase">
+                        Preparaciones incluidas
+                    </h2>
+                    <ul
+                        class="grid gap-px overflow-hidden rounded-md bg-border"
                     >
-                        {{ component.name }}
-                    </Link>
-                    <span class="flex items-center gap-2">
-                        <Badge v-if="component.archived" variant="secondary"
-                            >Archivada</Badge
+                        <li
+                            v-for="component in components"
+                            :key="component.id"
+                            class="flex items-center justify-between gap-3 bg-card px-4 py-1"
                         >
-                        <span class="font-semibold tabular-nums"
-                            >{{ component.servings }}
-                            {{
-                                component.servings === '1'
-                                    ? 'ración'
-                                    : 'raciones'
-                            }}</span
+                            <Link
+                                :href="show(component.id)"
+                                class="tap-target font-medium underline-offset-4 hover:underline"
+                            >
+                                {{ component.name }}
+                            </Link>
+                            <span class="flex items-center gap-2">
+                                <Badge
+                                    v-if="component.archived"
+                                    variant="secondary"
+                                    >Archivada</Badge
+                                >
+                                <span class="font-semibold tabular-nums"
+                                    >{{ component.servings }}
+                                    {{
+                                        component.servings === '1'
+                                            ? 'ración'
+                                            : 'raciones'
+                                    }}</span
+                                >
+                            </span>
+                        </li>
+                    </ul>
+                    <div v-if="totals.length > 0" class="grid gap-2">
+                        <h3 class="text-sm font-semibold">
+                            Todo lo que necesitas para {{ servings }}
+                            {{ servings === 1 ? 'ración' : 'raciones' }}
+                        </h3>
+                        <ul
+                            class="grid gap-px overflow-hidden rounded-md bg-border text-sm"
                         >
-                    </span>
-                </li>
-            </ul>
-            <div v-if="totals.length > 0" class="grid gap-2">
-                <h3 class="text-sm font-medium">
-                    Todo lo que necesitas para {{ servings }}
-                    {{ servings === 1 ? 'ración' : 'raciones' }}
-                </h3>
-                <ul class="divide-y rounded-xl border text-sm">
-                    <li
-                        v-for="total in totals"
-                        :key="total.ingredient"
-                        class="flex items-baseline justify-between gap-3 px-4 py-2"
-                    >
-                        <span>{{ total.ingredient }}</span>
-                        <span class="font-semibold tabular-nums">{{
-                            total.quantity
-                        }}</span>
-                    </li>
-                </ul>
+                            <li
+                                v-for="total in totals"
+                                :key="total.ingredient"
+                                class="flex items-baseline justify-between gap-3 bg-card px-4 py-2"
+                            >
+                                <span>{{ total.ingredient }}</span>
+                                <span class="font-semibold tabular-nums">{{
+                                    total.quantity
+                                }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </section>
             </div>
-        </section>
 
-        <p v-if="usedIn.length > 0" class="text-sm text-muted-foreground">
-            Se usa como preparación en:
-            <template v-for="(use, useIndex) in usedIn" :key="use.id">
-                <Link
-                    :href="show(use.id)"
-                    class="underline underline-offset-4"
-                    >{{ use.name }}</Link
-                >{{ useIndex < usedIn.length - 1 ? ', ' : '.' }}
-            </template>
-        </p>
+            <aside class="grid gap-6 lg:sticky lg:top-4">
+                <section class="grid gap-2">
+                    <h2 class="text-sm font-bold tracking-wide uppercase">
+                        Pasos
+                    </h2>
+                    <p
+                        v-if="recipe.instructions"
+                        class="max-w-prose text-sm leading-relaxed whitespace-pre-line"
+                    >
+                        {{ recipe.instructions }}
+                    </p>
+                    <p v-else class="text-sm text-pretty text-muted-foreground">
+                        Esta receta no tiene pasos escritos.
+                        <template v-if="canWrite"
+                            >Puedes añadirlos al editarla.</template
+                        >
+                    </p>
+                </section>
 
-        <section v-if="recipe.instructions" class="grid gap-2">
-            <h2 class="font-medium">Preparación</h2>
-            <p class="text-sm whitespace-pre-line">{{ recipe.instructions }}</p>
-        </section>
+                <section v-if="usedIn.length > 0" class="grid gap-2">
+                    <h2 class="text-sm font-bold tracking-wide uppercase">
+                        Se usa como preparación en
+                    </h2>
+                    <ul
+                        class="grid gap-px overflow-hidden rounded-md bg-border"
+                    >
+                        <li v-for="use in usedIn" :key="use.id">
+                            <Link
+                                :href="show(use.id)"
+                                class="flex min-h-11 items-center justify-between gap-3 bg-card px-4 py-2 text-sm font-medium hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-inset"
+                            >
+                                {{ use.name }}
+                                <ChevronRight
+                                    class="size-4 shrink-0 text-muted-foreground"
+                                    aria-hidden="true"
+                                />
+                            </Link>
+                        </li>
+                    </ul>
+                </section>
+            </aside>
+        </div>
     </div>
 </template>

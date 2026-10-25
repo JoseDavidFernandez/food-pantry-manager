@@ -53,8 +53,14 @@ const { isCurrentOrParentUrl } = useCurrentUrl();
                         variant="ghost"
                         :class="[
                             'w-full justify-start',
-                            { 'bg-muted': isCurrentOrParentUrl(item.href) },
+                            {
+                                'bg-foreground text-background hover:bg-foreground/90 hover:text-background':
+                                    isCurrentOrParentUrl(item.href),
+                            },
                         ]"
+                        :aria-current="
+                            isCurrentOrParentUrl(item.href) ? 'page' : undefined
+                        "
                         as-child
                     >
                         <Link :href="item.href">

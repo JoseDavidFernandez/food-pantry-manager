@@ -65,9 +65,7 @@ function save(): void {
         :class="
             cn(
                 'flex flex-wrap items-center gap-1 text-xs',
-                alternative.confirmed
-                    ? 'text-muted-foreground'
-                    : 'text-warning',
+                alternative.confirmed ? 'text-foreground/75' : 'text-warning',
             )
         "
         data-alternative
@@ -88,7 +86,7 @@ function save(): void {
                 <Button
                     variant="link"
                     size="sm"
-                    class="relative h-auto p-0 text-xs after:absolute after:-inset-x-2 after:-inset-y-3.5 after:content-[''] sm:after:-inset-y-1"
+                    class="relative h-auto p-0 text-xs text-foreground after:absolute after:-inset-x-2 after:content-[''] sm:after:-inset-y-1"
                     :aria-label="`${alternative.confirmed ? 'Cambiar' : 'Elegir'} entre ${names}: ${dishName}`"
                     @click="selected = String(alternative.chosen)"
                 >

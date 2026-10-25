@@ -117,27 +117,28 @@ function removeRow(key: number): void {
             v-for="(row, index) in rows"
             :key="row.key"
             :class="[
-                'grid gap-2 rounded-md border p-3 sm:grid-cols-[1fr_6rem_8rem_auto] sm:items-start',
-                withAlternatives &&
-                    row.alternative &&
-                    index > 0 &&
-                    '-mt-2 border-l-4 border-l-primary',
+                'grid gap-2 rounded-md p-3 sm:grid-cols-[1fr_6rem_8rem_auto] sm:items-start',
+                withAlternatives && row.alternative && index > 0
+                    ? '-mt-2 bg-muted'
+                    : 'bg-card',
             ]"
         >
+            <!-- R7: only an alternative row shows the box (to undo it); new alternatives come
+                 from «Añadir una alternativa», so ordinary rows carry no extra control. -->
             <div
-                v-if="withAlternatives && index > 0"
+                v-if="withAlternatives && row.alternative && index > 0"
                 class="flex flex-wrap items-center gap-2 text-xs sm:col-span-4"
             >
-                <input
-                    :id="`${idPrefix}-alternative-${row.key}`"
-                    v-model="row.alternative"
-                    type="checkbox"
-                    class="size-4 accent-primary"
-                />
+                <!-- The whole label is the touch area of the box (44 px on mobile). -->
                 <Label
-                    :for="`${idPrefix}-alternative-${row.key}`"
-                    class="text-xs font-normal"
+                    class="flex min-h-11 items-center gap-2 text-xs font-normal sm:min-h-0"
                 >
+                    <input
+                        :id="`${idPrefix}-alternative-${row.key}`"
+                        v-model="row.alternative"
+                        type="checkbox"
+                        class="size-4 shrink-0 accent-primary"
+                    />
                     O bien: alternativa a «{{ previousName(index) }}» (se usa
                     solo una de ellas)
                 </Label>

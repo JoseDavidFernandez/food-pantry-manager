@@ -124,7 +124,7 @@ function plan(): void {
                 type="search"
                 placeholder="Buscar receta"
                 autocomplete="off"
-                class="h-10 bg-card pl-9"
+                class="h-10 pl-9"
             />
         </div>
 
@@ -152,20 +152,20 @@ function plan(): void {
             Ninguna receta coincide con «{{ search }}».
         </p>
 
-        <ul v-else class="grid gap-2" aria-label="Recetas">
+        <ul v-else class="grid divide-y border-y" aria-label="Recetas">
             <li
                 v-for="recipe in visible"
                 :key="recipe.id"
                 :draggable="editable"
                 :class="[
-                    'flex items-center gap-2 rounded-lg border bg-card p-2 pl-1 text-sm shadow-xs',
+                    'flex items-center gap-2 py-2 pl-1 text-sm pointer-coarse:pl-0',
                     editable && 'cursor-grab active:cursor-grabbing',
                 ]"
                 @dragstart="onDragStart($event, recipe)"
             >
                 <GripVertical
                     v-if="editable"
-                    class="size-4 shrink-0 text-muted-foreground"
+                    class="size-4 shrink-0 text-muted-foreground pointer-coarse:hidden"
                     aria-hidden="true"
                 />
                 <span class="grid min-w-0 flex-1">
@@ -219,7 +219,7 @@ function plan(): void {
                                 :id="`${idPrefix}-target`"
                                 v-model="target"
                                 required
-                                class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                class="h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring"
                             >
                                 <option value="" disabled>
                                     Elige día y comida

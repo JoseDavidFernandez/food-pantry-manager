@@ -12,9 +12,9 @@ import { move, store } from '@/routes/menu/dishes';
 import type { PlannedDish, RecipeOption, UnitOption } from '@/types/pantry';
 
 /**
- * A lunch or dinner of the week (RN-15, RN-16): its dishes in order and «Añadir plato». A recipe
- * dropped here is added with its base servings; a dish dropped here moves to the end. Nothing is
- * ever replaced.
+ * A lunch or dinner of the week (RN-15, RN-16) as a floor tile: tinted with its meal's pigment
+ * (lunch ochre, dinner cobalt) when it has dishes, plain cement when empty. A recipe dropped here
+ * is added with its base servings; a dish dropped here moves to the end. Nothing is ever replaced.
  */
 const props = defineProps<{
     week: string;
@@ -28,7 +28,11 @@ const props = defineProps<{
     suggestions: string[];
     editable: boolean;
     slotOptions: SlotOption[];
+    isPast?: boolean;
+    isToday?: boolean;
 }>();
+
+const lunch = computed(() => props.meal === 'lunch');
 
 const slotTitle = computed(() => `${props.dayLabel} · ${props.mealLabel}`);
 const slotKey = computed(() => `${props.day}-${props.meal}`);
@@ -107,24 +111,46 @@ function onDrop(event: DragEvent): void {
         :data-slot-key="slotKey"
         :class="
             cn(
-                'grid min-h-24 min-w-0 content-start gap-2 rounded-lg border p-2 text-sm transition-colors sm:p-3',
-                dishes.length > 0
-                    ? 'bg-card'
-                    : 'border-dashed bg-background/60',
-                dropActive && 'border-primary bg-accent ring-2 ring-primary/40',
+                'relative grid min-h-24 min-w-0 content-start gap-1 overflow-hidden rounded-sm p-2.5 text-sm transition-colors sm:p-3',
+                dishes.length === 0
+                    ? 'bg-muted'
+                    : lunch
+                      ? 'bg-tile-lunch'
+                      : 'bg-tile-dinner',
+                isPast && dishes.length > 0 && 'saturate-[.35]',
+                isToday && 'ring-2 ring-foreground ring-inset',
+                dropActive && 'bg-accent ring-2 ring-primary ring-inset',
             )
         "
         @dragover="onDragOver"
         @dragleave="dropActive = false"
         @drop="onDrop"
     >
+        <!-- The tile's corner: a quarter disc of the meal's pigment, as on a hydraulic tile. -->
         <span
-            class="text-xs font-medium tracking-wide text-muted-foreground uppercase sm:sr-only"
+            v-if="dishes.length > 0"
+            aria-hidden="true"
+            :class="
+                cn(
+                    'pointer-events-none absolute right-0 bottom-0 size-4 rounded-tl-full',
+                    lunch ? 'bg-pigment-ocre' : 'bg-pigment-cobalto',
+                )
+            "
+        />
+        <span
+            :class="
+                cn(
+                    'text-xs font-semibold tracking-wide uppercase sm:sr-only',
+                    dishes.length > 0
+                        ? 'text-foreground/75'
+                        : 'text-muted-foreground',
+                )
+            "
         >
             {{ mealLabel }}
         </span>
 
-        <ul v-if="dishes.length > 0" class="grid gap-2">
+        <ul v-if="dishes.length > 0" class="grid divide-y divide-foreground/10">
             <PlannedDishCard
                 v-for="(dish, index) in dishes"
                 :key="dish.id"
@@ -143,7 +169,7 @@ function onDrop(event: DragEvent): void {
                 :editable="editable"
             />
         </ul>
-        <p v-else class="text-muted-foreground">Vacío</p>
+        <p v-else-if="!editable" class="text-muted-foreground">Vacío</p>
 
         <DishDialog
             v-if="editable"
@@ -159,9 +185,18 @@ function onDrop(event: DragEvent): void {
         >
             <template #trigger>
                 <Button
-                    variant="outline"
+                    variant="ghost"
                     size="sm"
-                    class="mt-auto min-h-11 sm:min-h-8"
+                    :class="
+                        cn(
+                            'mt-auto justify-start gap-1.5 px-2 hover:bg-foreground/10 hover:text-foreground',
+                            dishes.length > 0
+                                ? 'text-foreground/75'
+                                : 'text-muted-foreground',
+                            dishes.length === 0 &&
+                                'min-h-11 justify-center border border-dashed border-foreground/25 sm:min-h-14',
+                        )
+                    "
                     :aria-label="`Añadir plato: ${slotTitle}`"
                 >
                     <Plus />

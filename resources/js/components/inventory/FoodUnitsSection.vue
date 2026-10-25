@@ -20,6 +20,8 @@ import type { Ingredient, UnitOption } from '@/types/pantry';
  * «1 bolsa = 500 g») and the pack it is bought in. Only this food uses them.
  */
 const props = defineProps<{
+    /** Inside a folded section that already shows the title (R4). */
+    headless?: boolean;
     food: Ingredient;
     units: UnitOption[];
     readonly?: boolean;
@@ -45,11 +47,14 @@ const purchaseLabel = computed(
 
 <template>
     <section
-        class="grid gap-3 border-t pt-4"
+        :class="['grid gap-3', !headless && 'border-t pt-4']"
         :aria-labelledby="`food-units-${food.id}`"
     >
         <div class="grid gap-1">
-            <h3 :id="`food-units-${food.id}`" class="text-sm font-medium">
+            <h3
+                :id="`food-units-${food.id}`"
+                :class="headless ? 'sr-only' : 'text-sm font-medium'"
+            >
                 Unidades y compra
             </h3>
             <p class="text-xs text-muted-foreground">
@@ -66,6 +71,7 @@ const purchaseLabel = computed(
             <li
                 v-for="conversion in food.conversions ?? []"
                 :key="conversion.id"
+                class="max-sm:py-3"
             >
                 <Badge variant="secondary" class="gap-1 overflow-visible pr-1">
                     {{ conversion.label }}
