@@ -16,6 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
+import { groupOptions } from '@/lib/units';
 import { checked } from '@/routes/shopping-lists/receptions';
 import type { Option, ShoppingItem, UnitOption } from '@/types/pantry';
 
@@ -159,13 +160,22 @@ const itemName = (id: number): string =>
                                     v-model="row.unit"
                                     class="h-11 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-xs sm:h-9"
                                 >
-                                    <option
-                                        v-for="unit in units"
-                                        :key="unit.value"
-                                        :value="unit.value"
+                                    <optgroup
+                                        v-for="group in groupOptions(
+                                            units,
+                                            row.unit,
+                                        )"
+                                        :key="group.label ?? ''"
+                                        :label="group.label ?? undefined"
                                     >
-                                        {{ unit.label }}
-                                    </option>
+                                        <option
+                                            v-for="unit in group.options"
+                                            :key="unit.value"
+                                            :value="unit.value"
+                                        >
+                                            {{ unit.label }}
+                                        </option>
+                                    </optgroup>
                                 </select>
                             </div>
                             <div class="col-span-2 grid gap-1 sm:col-span-1">

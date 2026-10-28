@@ -13,6 +13,7 @@ import EmptyState from '@/components/EmptyState.vue';
 import FilterTabs from '@/components/FilterTabs.vue';
 import IngredientThumb from '@/components/IngredientThumb.vue';
 import AddStockDialog from '@/components/inventory/AddStockDialog.vue';
+import BasicFoods from '@/components/inventory/BasicFoods.vue';
 import ClassifyDialog from '@/components/inventory/ClassifyDialog.vue';
 import FoodDialog from '@/components/inventory/FoodDialog.vue';
 import InventoryItemRow from '@/components/inventory/InventoryItemRow.vue';
@@ -24,6 +25,7 @@ import { useHouseholdAccess } from '@/composables/useHouseholdAccess';
 import { locationIcon, UNCATEGORIZED } from '@/lib/visuals';
 import { index } from '@/routes/inventory';
 import type {
+    BasicFood,
     Ingredient,
     InventoryItem,
     Option,
@@ -43,6 +45,7 @@ const props = defineProps<{
     filter: Filter | null;
     counts: Record<'all' | Filter, number>;
     suggestions: string[];
+    basics: BasicFood[];
     similar: SimilarIngredient[];
     typed: string | null;
     units: UnitOption[];
@@ -155,6 +158,16 @@ const visibleUnstocked = computed(() =>
 );
 
 const filtering = computed(() => search.value !== '' || category.value !== '');
+
+// Usual foods for the catalog (RN-49), with the same search and category filter. The server
+// only sends them in «Sin existencias» and to members who can write.
+const visibleBasics = computed(() =>
+    props.basics.filter(
+        (food) =>
+            normalize(food.name).includes(normalize(search.value)) &&
+            (category.value === '' || food.category === category.value),
+    ),
+);
 const uncategorized = computed(
     () => props.foods.filter((f) => f.category === null).length,
 );
@@ -181,7 +194,9 @@ const hasContent = computed(() =>
 
 const emptyMessage = computed(() => {
     if (unstockedTab.value) {
-        return 'Todos los alimentos de tu catálogo tienen existencias.';
+        return props.foods.length === 0
+            ? 'Aún no tienes alimentos sin existencias.'
+            : 'Todos los alimentos de tu catálogo tienen existencias.';
     }
 
     const names: Record<string, string> = {
@@ -231,6 +246,7 @@ function clearFilters(): void {
                     v-model:open="addOpen"
                     v-model:create="addCreate"
                     :prefill="prefill"
+                    :foods="foods"
                     :suggestions="suggestions"
                     :similar="similar"
                     :typed="typed"
@@ -325,7 +341,9 @@ function clearFilters(): void {
             :title="emptyMessage"
             :description="
                 unstockedTab
-                    ? 'Aquí aparecen los alimentos de tu catálogo (por ejemplo, los de tus recetas) que no tienes en casa.'
+                    ? visibleBasics.length > 0
+                        ? 'Aquí aparecen los alimentos de tu catálogo que no tienes en casa. Puedes empezar por los habituales de aquí debajo.'
+                        : 'Aquí aparecen los alimentos de tu catálogo (por ejemplo, los de tus recetas) que no tienes en casa.'
                     : 'Añade lo que tienes con «Añadir al inventario»: se suma a lo que ya hay si la unidad es compatible.'
             "
         />
@@ -446,6 +464,12 @@ function clearFilters(): void {
                 </ul>
             </section>
         </template>
+
+        <BasicFoods
+            v-if="unstockedTab && canWrite && visibleBasics.length > 0"
+            :basics="visibleBasics"
+            :filtering="filtering"
+        />
 
         <ClassifyDialog
             v-model:open="classifyOpen"

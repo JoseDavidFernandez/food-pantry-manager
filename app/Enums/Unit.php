@@ -99,7 +99,29 @@ enum Unit: string
     }
 
     /**
-     * @return list<array{value: string, label: string, group: string}>
+     * How the unit is shown in selectors (2026-10-28): measures (g, kg, ml, l), pieces counted
+     * one by one (unidad, rebanada, loncha, diente, cabeza) and the packs a food is bought in.
+     */
+    public function kind(): string
+    {
+        return match ($this) {
+            self::Gram, self::Kilogram, self::Millilitre, self::Litre => 'measure',
+            self::Piece, self::Slice, self::DeliSlice, self::Clove, self::Head => 'piece',
+            default => 'pack',
+        };
+    }
+
+    /**
+     * Bandeja, caja and malla are no longer offered for new entries (2026-10-28): paquete and
+     * bolsa cover them. They stay valid, so existing foods, stock and recipes keep working.
+     */
+    public function isOffered(): bool
+    {
+        return ! in_array($this, [self::Tray, self::Box, self::Net], true);
+    }
+
+    /**
+     * @return list<array{value: string, label: string, group: string, kind: string, offered: bool}>
      */
     public static function options(): array
     {
@@ -107,6 +129,8 @@ enum Unit: string
             'value' => $unit->value,
             'label' => $unit->label(),
             'group' => $unit->group()->value,
+            'kind' => $unit->kind(),
+            'offered' => $unit->isOffered(),
         ], self::cases());
     }
 }

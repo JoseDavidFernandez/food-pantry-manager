@@ -5,6 +5,10 @@ export type Option = {
 
 export type UnitOption = Option & {
     group: string;
+    /** Section of the selector: measures, pieces or packs. */
+    kind?: 'measure' | 'piece' | 'pack';
+    /** False for units kept only for existing data (bandeja, caja, malla). */
+    offered?: boolean;
 };
 
 export type StorageLocation = 'fridge' | 'freezer' | 'pantry';
@@ -253,6 +257,10 @@ export type Ingredient = IngredientVisual & {
     id: number;
     name: string;
     default_unit: string | null;
+    /** Unit groups comparable with its usual unit (directly or through its conversions). */
+    unit_groups?: string[];
+    /** What one pack holds, per pack unit, when its conversions say so («1 kg»). */
+    pack_contents?: Record<string, string>;
     stock_count: number;
     recipe_count: number;
     in_menus: boolean;
@@ -269,4 +277,11 @@ export type Ingredient = IngredientVisual & {
         display: string | null;
     } | null;
     conversions?: { id: number; label: string }[];
+};
+
+/** A usual food offered in «Sin existencias» (RN-49, BasicFoods). */
+export type BasicFood = {
+    name: string;
+    category: string;
+    category_label: string;
 };

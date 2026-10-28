@@ -42,6 +42,15 @@ const inCart = computed(
     () => props.item.is_purchased && !props.item.is_received,
 );
 const deleteOpen = ref(false);
+
+// M4: the main figure is what is missing, not a purchase: «Faltan 300 g» (or «Falta 1 bote»).
+// When the food is bought in packs, what to buy goes below: «Para comprar: 1 bolsa».
+const missing = computed(
+    () => props.item.detail?.missing ?? props.item.display,
+);
+const missingVerb = computed(() =>
+    /^1(\s|$)/.test(missing.value ?? '') ? 'Falta' : 'Faltan',
+);
 const args = computed(() => ({ list: props.listId, item: props.item.id }));
 
 // Ingredient lines keep their compatible unit group; free-text lines may use any unit.
@@ -147,15 +156,17 @@ const reviewMessage = computed(() => {
                     class="text-sm tabular-nums"
                     data-quantity
                 >
-                    Comprar
-                    <strong>{{ item.display }}</strong>
+                    {{ missingVerb }}
+                    <strong>{{ missing }}</strong>
                 </p>
                 <p
                     v-if="item.detail?.pack"
                     class="text-xs text-muted-foreground tabular-nums"
                     data-pack
                 >
-                    {{ item.detail.pack }}
+                    Para comprar:
+                    <strong class="text-foreground">{{ item.display }}</strong>
+                    ({{ item.detail.pack }})
                 </p>
                 <details
                     v-if="item.detail"
@@ -198,8 +209,8 @@ const reviewMessage = computed(() => {
                             }}</template>
                         </li>
                         <li v-if="item.detail.pack">
-                            Faltan exactamente {{ item.detail.missing }}; se
-                            compra en envases enteros.
+                            Se compra en envases enteros:
+                            {{ item.display }}.
                         </li>
                     </ul>
                 </details>

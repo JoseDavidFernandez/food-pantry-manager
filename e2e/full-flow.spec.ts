@@ -681,8 +681,8 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
 
     await test.step('6. Lista de la compra de la semana, sin cerrar el menú', async () => {
         await openWeekList(page);
-        // B1: what to buy is the main figure; the calculation is folded.
-        await expect(row(page, 'Arroz')).toContainText('Comprar');
+        // B1 and M4: what is missing is the main figure; the calculation is folded.
+        await expect(row(page, 'Arroz')).toContainText('Faltan');
 
         await expect(row(page, 'Arroz')).toContainText(/400\s*g/);
         // 1 jar × 3/2 = 1,5 → rounded up to 2 jars (RN-23).
@@ -758,7 +758,7 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         );
 
         // The list now asks for what is missing with the new stock: 600 − (200 + 250) g.
-        await expect(row(page, 'Arroz')).toContainText('Comprar 150 g');
+        await expect(row(page, 'Arroz')).toContainText('Faltan 150 g');
         await expect(row(page, 'Arroz')).toContainText(
             'Recibido 250 g · falta 150 g',
         );
@@ -1060,12 +1060,11 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
 
         // The list: 25 croquetas in whole bags, the chosen option only.
         await openWeekList(page);
-        await expect(row(page, 'Croquetas')).toContainText(/2\s*bolsas/);
         await expect(row(page, 'Croquetas')).toContainText(
-            'Faltan exactamente 25 unidades',
+            'Faltan 25 unidades',
         );
         await expect(row(page, 'Croquetas')).toContainText(
-            '1 bolsa = 20 unidades',
+            /Para comprar:\s*2\s*bolsas\s*\(1 bolsa = 20 unidades\)/,
         );
         await expect(row(page, 'Leche evaporada')).toContainText(/150\s*ml/);
         await expect(page.getByText('Nata', { exact: true })).toHaveCount(0);
@@ -1144,6 +1143,217 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         await screenshot(page, '12e-basicos');
     });
 
+    await test.step('12d. Hallazgos de la prueba manual: habituales (M1, M3), unidad sugerida (E1), unidades (E2) y contenido del envase (M2)', async () => {
+        await navigate(page, 'Inventario');
+        await page.getByRole('link', { name: /Sin existencias/ }).click();
+        await page.waitForURL((url) => url.search.includes('location=none'));
+        const basics = page.locator('[data-basic-foods]');
+        await expect(
+            basics.getByRole('heading', { name: 'Alimentos habituales' }),
+        ).toBeVisible();
+
+        // RN-49: what the household already has is not offered again, by name, alias
+        // («Huevo» is an alias of Huevos) or plural.
+        for (const name of [
+            'Arroz',
+            'Huevo',
+            'Huevos',
+            'Pan',
+            'Merluza',
+            'Tomate frito',
+        ]) {
+            await expect(
+                basics.getByRole('button', {
+                    name: `Añadir ${name} al catálogo`,
+                    exact: true,
+                }),
+            ).toHaveCount(0);
+        }
+
+        // The page search filters the suggestions too, with their groups open.
+        const search = page.getByLabel('Buscar en el inventario');
+        await search.fill('crema');
+        await expect(
+            basics.getByRole('button', {
+                name: 'Añadir Crema de calabaza al catálogo',
+            }),
+        ).toBeVisible();
+        await search.fill('zzzz');
+        await expect(basics).toHaveCount(0);
+        await search.fill('');
+
+        // M1 + M3: one touch creates the food in the catalog, classified, with no stock.
+        await openFold(basics, 'Caldos, cremas y sopas');
+        await basics
+            .getByRole('button', {
+                name: 'Añadir Caldo de pollo al catálogo',
+                exact: true,
+            })
+            .click();
+        await toast(page, 'Alimento «Caldo de pollo» creado.');
+        await expect(row(page, 'Caldo de pollo')).toContainText(
+            'Caldos, cremas y sopas',
+        );
+        await expect(
+            basics.getByRole('button', {
+                name: 'Añadir Caldo de pollo al catálogo',
+                exact: true,
+            }),
+        ).toHaveCount(0);
+
+        // A name that looks like an existing food asks for the usual confirmation (RN-04).
+        await openFold(basics, 'Panadería y cereales');
+        await basics
+            .getByRole('button', {
+                name: 'Añadir Pan rallado al catálogo',
+                exact: true,
+            })
+            .click();
+        await expect(basics.getByRole('alert')).toContainText(
+            'Se parece a «Pan»',
+        );
+        await expect(
+            page.getByText('Pan rallado', { exact: true }),
+        ).toHaveCount(1);
+        await basics
+            .getByRole('button', { name: 'Crear «Pan rallado» igualmente' })
+            .click();
+        await toast(page, 'Alimento «Pan rallado» creado.');
+        await expect(basics.getByRole('alert')).toHaveCount(0);
+        await expect(row(page, 'Pan rallado')).toContainText(
+            'Panadería y cereales',
+        );
+
+        // E1: a food counted in cans. Its usual unit is chosen in its sheet.
+        await openFold(basics, 'Conservas y envasados');
+        await basics
+            .getByRole('button', {
+                name: 'Añadir Atún en lata al catálogo',
+                exact: true,
+            })
+            .click();
+        await toast(page, 'Alimento «Atún en lata» creado.');
+        await page
+            .getByRole('button', { name: 'Ficha de Atún en lata' })
+            .click();
+        const sheet = page.getByRole('dialog');
+        await sheet
+            .getByLabel('Unidad habitual (opcional)')
+            .selectOption('can');
+        await sheet.getByRole('button', { name: 'Guardar cambios' }).click();
+        await toast(page, 'Alimento actualizado.');
+        await page.keyboard.press('Escape');
+        await expect(sheet).toBeHidden();
+
+        // Adding stock suggests the unit of the food, however the name is typed.
+        await page
+            .getByRole('button', { name: 'Añadir al inventario' })
+            .first()
+            .click();
+        const add = page.getByRole('dialog');
+        // By id: with the pack content open there is a second «Unidad» field (of the content).
+        const unit = add.locator('#unit');
+        await add.getByLabel('Alimento', { exact: true }).fill('ATÚN EN LATA ');
+        await expect(unit).toHaveValue('can');
+        const warning = add.locator('#unit-warning');
+        await expect(warning).toHaveCount(0);
+
+        // E2: units in groups, the food's own first; tray, box and net are no longer offered.
+        expect(
+            await unit
+                .locator('optgroup')
+                .evaluateAll((groups) =>
+                    groups.map((group) => group.getAttribute('label')),
+                ),
+        ).toEqual(['De este alimento', 'Medidas', 'Piezas', 'Envases']);
+        await expect(
+            unit.locator('optgroup[label="De este alimento"] option'),
+        ).toHaveText(['latas']);
+        for (const hidden of ['tray', 'box', 'net']) {
+            await expect(unit.locator(`option[value="${hidden}"]`)).toHaveCount(
+                0,
+            );
+        }
+
+        // An incompatible unit warns, and says how to make it comparable.
+        await unit.selectOption('g');
+        await expect(warning).toContainText(
+            'salvo que añadas una equivalencia en su ficha',
+        );
+        await expect(unit).toHaveAttribute('aria-describedby', 'unit-warning');
+        await unit.selectOption('pack');
+        await expect(warning).toContainText(
+            'salvo que indiques cuánto trae cada envase',
+        );
+        await unit.selectOption('can');
+        await expect(warning).toHaveCount(0);
+        await add.getByLabel('Cantidad', { exact: true }).fill('3');
+        await add
+            .getByLabel('Ubicación', { exact: true })
+            .selectOption('pantry');
+        await add.getByRole('button', { name: 'Añadir al inventario' }).click();
+        await expect(add).toBeHidden();
+        await toast(page, 'Atún en lata: ahora hay 3 latas en Despensa.');
+
+        // M2: the content of a pack, with a quick button, saved once in the food sheet.
+        await page
+            .getByRole('button', { name: 'Añadir al inventario' })
+            .first()
+            .click();
+        await add.getByLabel('Alimento', { exact: true }).fill('Fideos finos');
+        await add
+            .getByLabel('Es un alimento nuevo: crearlo en el catálogo')
+            .check();
+        await unit.selectOption('pack');
+        const content = add.getByRole('group', {
+            name: '¿Cuánto trae cada envase? (opcional)',
+        });
+        await expect(content).toBeVisible();
+        await content.getByRole('button', { name: '500 g' }).click();
+        await expect(
+            content.getByRole('button', { name: '500 g' }),
+        ).toHaveAttribute('aria-pressed', 'true');
+        await expect(add.getByLabel('Contenido')).toHaveValue('500');
+        await add.getByLabel('Cantidad', { exact: true }).fill('2');
+        await add
+            .getByLabel('Ubicación', { exact: true })
+            .selectOption('pantry');
+        await add.getByRole('button', { name: 'Añadir al inventario' }).click();
+        await expect(add).toBeHidden();
+        await toast(
+            page,
+            'Fideos finos: ahora hay 2 paquetes en Despensa. Guardado en su ficha: 1 paquete = 500 g.',
+        );
+
+        // The sheet keeps the equivalence and the purchase format.
+        await page.getByRole('link', { name: /^Todo/ }).click();
+        await page.waitForURL((url) => !url.search.includes('location='));
+        await page
+            .getByRole('button', { name: 'Ficha de Fideos finos' })
+            .click();
+        await openFold(sheet, 'Unidades y compra');
+        await expect(sheet).toContainText('1 paquete = 500 g');
+        await expect(sheet.getByLabel('Se compra en')).toHaveValue('pack');
+        await page.keyboard.press('Escape');
+        await expect(sheet).toBeHidden();
+
+        // Next time the content is already known: no question, only what the sheet says.
+        await page
+            .getByRole('button', { name: 'Añadir al inventario' })
+            .first()
+            .click();
+        await add.getByLabel('Alimento', { exact: true }).fill('Fideos finos');
+        await unit.selectOption('pack');
+        await expect(add.locator('[data-pack-content]')).toContainText(
+            'Cada envase trae 500 g (de su ficha).',
+        );
+        await expect(content).toHaveCount(0);
+        await expect(warning).toHaveCount(0);
+        await screenshot(page, '12d-envase-conocido');
+        await page.keyboard.press('Escape');
+        await expect(add).toBeHidden();
+    });
+
     await test.step('14. Interfaz a 360 px', async () => {
         await page.setViewportSize({ width: 360, height: 780 });
 
@@ -1219,6 +1429,42 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
             ).toEqual([]);
             await screenshot(page, file);
         }
+
+        // RN-49 at 360 px: the usual foods fit the page and every one answers to a 44 px touch.
+        await navigate(page, 'Inventario');
+        await page.getByRole('link', { name: /Sin existencias/ }).click();
+        await page.waitForURL((url) => url.search.includes('location=none'));
+        const basics = page.locator('[data-basic-foods]');
+        await openFold(basics, 'Frutas');
+        const chips = basics.locator('details[open] li button');
+        await expect(chips.first()).toBeVisible();
+        expect(
+            await page.evaluate(
+                () => document.documentElement.scrollWidth - window.innerWidth,
+            ),
+            'desbordamiento horizontal en «Alimentos habituales»',
+        ).toBeLessThanOrEqual(0);
+        const chipSizes = await chips.evaluateAll((buttons) =>
+            buttons.map((button) => {
+                const box = button.getBoundingClientRect();
+
+                return {
+                    text: button.textContent?.trim(),
+                    height: Math.round(box.height),
+                    width: Math.round(box.width),
+                    outside: box.right > window.innerWidth,
+                };
+            }),
+        );
+        expect(
+            chipSizes.filter(
+                (chip) => chip.height < 44 || chip.width < 44 || chip.outside,
+            ),
+            'botones de alimentos habituales pequeños o fuera de la pantalla',
+        ).toEqual([]);
+        await chips.first().scrollIntoViewIfNeeded();
+        expect(await touchSize(chips.first())).toMatchObject({ height: 44 });
+        await screenshot(page, '16b-movil-habituales');
 
         // B2 and B3 (Phase B): in the shop the products come first, and every control of a row
         // answers to a 44 px touch.
@@ -1461,5 +1707,11 @@ test('fases 2 a 6 en el navegador sobre desarrollo', async ({ page }) => {
         });
         expect(status).toBe(403);
         await screenshot(page, '19-lector-inventario');
+
+        // RN-49: the viewer sees the foods without stock, but no usual foods to add.
+        await page.getByRole('link', { name: /Sin existencias/ }).click();
+        await page.waitForURL((url) => url.search.includes('location=none'));
+        await expect(row(page, 'Caldo de pollo')).toBeVisible();
+        await expect(page.locator('[data-basic-foods]')).toHaveCount(0);
     });
 });

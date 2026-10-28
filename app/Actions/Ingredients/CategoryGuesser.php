@@ -20,33 +20,13 @@ class CategoryGuesser
     {
         $index = $this->index();
 
-        foreach ($this->candidates(IngredientName::normalize($name)) as $candidate) {
+        foreach (IngredientName::withSingulars(IngredientName::normalize($name)) as $candidate) {
             if (isset($index[$candidate])) {
                 return $index[$candidate];
             }
         }
 
         return null;
-    }
-
-    /**
-     * The name itself and its singular forms (tomates → tomate, limones → limon).
-     *
-     * @return list<string>
-     */
-    private function candidates(string $name): array
-    {
-        $candidates = [$name];
-
-        if (str_ends_with($name, 'es')) {
-            $candidates[] = substr($name, 0, -2);
-        }
-
-        if (str_ends_with($name, 's')) {
-            $candidates[] = substr($name, 0, -1);
-        }
-
-        return $candidates;
     }
 
     /**

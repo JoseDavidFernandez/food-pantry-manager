@@ -113,11 +113,11 @@ const sampleWeek = [
                 >
                     <ShoppingCart class="size-5 shrink-0 text-primary" />
                     <span class="min-w-0 flex-1"
-                        ><span class="font-semibold">Croquetas</span> · Comprar
-                        <strong>5 bolsas</strong></span
+                        ><span class="font-semibold">Croquetas</span> · Faltan
+                        <strong>85 unidades</strong></span
                     >
                     <span class="text-xs text-muted-foreground"
-                        >1 bolsa = 20 unidades</span
+                        >Para comprar: 5 bolsas (1 bolsa = 20 unidades)</span
                     >
                 </div>
                 <figcaption class="text-xs text-muted-foreground">

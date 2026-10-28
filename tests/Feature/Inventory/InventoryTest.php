@@ -155,3 +155,63 @@ test('empty inventory renders without items', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page->has('items', 0)->where('counts.all', 0));
 });
+
+test('E1: each food says which unit groups compare with its usual unit, so adding stock can warn', function () {
+    $user = User::factory()->withHousehold()->create();
+    $household = $user->currentHousehold();
+    $atun = Ingredient::factory()->for($household)->named('Atún')->create(['default_unit' => 'can']);
+    $arroz = Ingredient::factory()->for($household)->named('Arroz')->create(['default_unit' => 'g']);
+    $arroz->conversions()->create(['unit' => 'pack', 'factor' => '1', 'to_unit' => 'kg']);
+    Ingredient::factory()->for($household)->named('Sal')->create(['default_unit' => null]);
+
+    $this->actingAs($user)->get(route('inventory.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('foods.0.name', 'Arroz')
+        ->where('foods.0.unit_groups', ['mass', 'pack'])
+        ->where('foods.1.name', 'Atún')
+        ->where('foods.1.unit_groups', ['can'])
+        ->where('foods.2.name', 'Sal')
+        ->where('foods.2.unit_groups', []));
+});
+
+test('M2: what one pack holds is saved once as a conversion of the food, and becomes its purchase format', function () {
+    addStock(['ingredient' => 'Arroz', 'create_ingredient' => '1', 'quantity' => '2', 'unit' => 'pack', 'content_quantity' => '1', 'content_unit' => 'kg'])
+        ->assertSessionHasNoErrors();
+
+    $arroz = Ingredient::query()->where('name', 'Arroz')->sole();
+    expect(stockRows())->toBe(['pantry 2.000 pack'])
+        ->and($arroz->purchase_unit)->toBe(Unit::Pack)
+        ->and($arroz->conversions()->get()->map(fn ($c) => "1 {$c->unit->value} = {$c->factor} {$c->to_unit->value}")->all())->toBe(['1 pack = 1.000000 kg']);
+
+    // The next time the content is known: shown, and the pack compares with grams.
+    $arroz->update(['default_unit' => 'g']);
+    $this->get(route('inventory.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('foods.0.pack_contents', ['pack' => '1 kg'])
+        ->where('foods.0.unit_groups', ['mass', 'pack']));
+});
+
+test('M2: the pack content accepts a decimal comma and keeps a purchase format already chosen', function () {
+    $patatas = Ingredient::factory()->for($this->household)->named('Patatas')->create(['purchase_unit' => 'net']);
+    $patatas->conversions()->create(['unit' => 'net', 'factor' => '3', 'to_unit' => 'kg']);
+
+    addStock(['ingredient' => 'Patatas', 'quantity' => '1', 'unit' => 'bag', 'content_quantity' => '2,5', 'content_unit' => 'kg'])
+        ->assertSessionHasNoErrors();
+
+    expect($patatas->refresh()->purchase_unit)->toBe(Unit::Net)
+        ->and($patatas->conversions()->where('unit', 'bag')->value('factor'))->toBe('2.500000');
+});
+
+test('M2: no content without a pack, and never a second answer for the same pack; nothing is saved then', function () {
+    addStock(['ingredient' => 'Arroz', 'create_ingredient' => '1', 'quantity' => '300', 'unit' => 'g', 'content_quantity' => '1', 'content_unit' => 'kg'])
+        ->assertSessionHasErrors('content_quantity');
+    expect(Ingredient::query()->count())->toBe(0)->and(stockRows())->toBe([]);
+
+    $pasta = Ingredient::factory()->for($this->household)->named('Pasta')->create();
+    $pasta->conversions()->create(['unit' => 'pack', 'factor' => '500', 'to_unit' => 'g']);
+    addStock(['ingredient' => 'Pasta', 'quantity' => '1', 'unit' => 'pack', 'content_quantity' => '1', 'content_unit' => 'kg'])
+        ->assertSessionHasErrors('content_quantity');
+    expect(stockRows())->toBe([])->and($pasta->conversions()->count())->toBe(1);
+
+    // Without a content, a pack is added as before: no conversion is invented.
+    addStock(['ingredient' => 'Galletas', 'create_ingredient' => '1', 'quantity' => '1', 'unit' => 'pack'])->assertSessionHasNoErrors();
+    expect(Ingredient::query()->where('name', 'Galletas')->sole()->conversions()->count())->toBe(0);
+});

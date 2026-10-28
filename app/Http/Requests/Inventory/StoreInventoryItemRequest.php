@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Inventory;
 
+use App\Actions\Ingredients\FoodUnitsEditor;
 use App\Actions\Ingredients\IngredientCatalog;
 use App\Enums\IngredientCategory;
 use App\Enums\StorageLocation;
@@ -21,7 +22,9 @@ use Illuminate\Validation\Validator;
  */
 class StoreInventoryItemRequest extends FormRequest
 {
-    use NormalizesQuantity;
+    use NormalizesQuantity {
+        prepareForValidation as normalizeQuantity;
+    }
 
     private ?Ingredient $resolved = null;
 
@@ -40,7 +43,27 @@ class StoreInventoryItemRequest extends FormRequest
             'label' => ['nullable', 'string', 'max:100'],
             // Only used when the ingredient is created here.
             'category' => ['nullable', Rule::enum(IngredientCategory::class)],
+            // Optional content of each pack («1 paquete = 1 kg»), saved as a conversion of the food.
+            'content_quantity' => ['nullable', 'numeric', 'gt:0', 'max:99999999', 'decimal:0,6'],
+            'content_unit' => ['nullable', 'required_with:content_quantity', Rule::in(['g', 'kg', 'ml', 'l'])],
         ];
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function attributes(): array
+    {
+        return ['content_quantity' => 'contenido de cada envase', 'content_unit' => 'unidad del contenido'];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeQuantity();
+
+        if (is_string($this->input('content_quantity'))) {
+            $this->merge(['content_quantity' => str_replace(',', '.', trim($this->input('content_quantity')))]);
+        }
     }
 
     /**
@@ -62,6 +85,8 @@ class StoreInventoryItemRequest extends FormRequest
                 $this->resolved = $catalog->resolve($household, $typed);
 
                 if ($this->resolved !== null) {
+                    $this->checkPackContent($validator);
+
                     return;
                 }
 
@@ -74,8 +99,50 @@ class StoreInventoryItemRequest extends FormRequest
                 } elseif ($similar !== [] && ! $this->boolean('confirm_new')) {
                     $validator->errors()->add('ingredient', "«{$name}» se parece a un ingrediente que ya tienes.{$suggestion} Elige la sugerencia o confirma que es un ingrediente nuevo.");
                 }
+
+                $this->checkPackContent($validator);
             },
         ];
+    }
+
+    /**
+     * The content only applies to a pack (lata, bote, paquete…) and must not contradict the
+     * conversions the food already has.
+     */
+    private function checkPackContent(Validator $validator): void
+    {
+        $content = $this->packContent();
+
+        if ($content === null || $validator->errors()->hasAny(['unit', 'content_quantity', 'content_unit'])) {
+            return;
+        }
+
+        $unit = Unit::from($this->string('unit')->toString());
+
+        if ($unit->kind() !== 'pack') {
+            $validator->errors()->add('content_quantity', 'El contenido solo se indica para envases (lata, bote, paquete, bolsa…).');
+
+            return;
+        }
+
+        if ($this->resolved !== null) {
+            $problem = app(FoodUnitsEditor::class)->conversionProblem($this->resolved, $unit, $content['unit']);
+
+            if ($problem !== null) {
+                $validator->errors()->add('content_quantity', $problem);
+            }
+        }
+    }
+
+    /**
+     * @return array{factor: numeric-string, unit: Unit}|null
+     */
+    public function packContent(): ?array
+    {
+        $factor = $this->string('content_quantity')->toString();
+        $unit = Unit::tryFrom($this->string('content_unit')->toString());
+
+        return is_numeric($factor) && $unit !== null ? ['factor' => bcadd($factor, '0', 6), 'unit' => $unit] : null;
     }
 
     public function resolvedIngredient(): ?Ingredient

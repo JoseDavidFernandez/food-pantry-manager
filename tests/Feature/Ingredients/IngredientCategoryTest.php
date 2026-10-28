@@ -1,5 +1,6 @@
 <?php
 
+use App\Actions\Ingredients\CategoryGuesser;
 use App\Enums\IngredientCategory;
 use App\Enums\StorageLocation;
 use App\Enums\Unit;
@@ -57,6 +58,55 @@ test('CA-19: a new food gets its category from the local dictionary; unknown nam
         ->and(Ingredient::where('name', 'Merluzas')->sole()->category)->toBe(IngredientCategory::Fish)
         ->and(Ingredient::where('name', 'Limónes')->sole()->category)->toBe(IngredientCategory::Fruit)
         ->and(Ingredient::where('name', 'Pollo al curry precocinado')->sole()->category)->toBeNull();
+});
+
+test('CA-19: broths, creams and soups get their own category; «crema» alone and «nata» do not', function () {
+    $guesser = app(CategoryGuesser::class);
+
+    // Exact names after normalization (case, accents, extra spaces) and a plural on the last word.
+    foreach (['Caldo', 'caldo de pollo', 'Consomé', 'Crema de champiñones', '  CREMA  de   calabacín ', 'Puré de verduras', 'Sopas', 'Gazpachos', 'Vichyssoise'] as $name) {
+        expect($guesser->guess($name))->toBe(IngredientCategory::SoupsBroths, $name);
+    }
+
+    // «Crema» alone may be cream or a dessert: no guess. Cream stays a dairy product, and
+    // neighbouring foods keep their category.
+    expect($guesser->guess('Crema'))->toBeNull()
+        ->and($guesser->guess('Crema de pollo casera'))->toBeNull()
+        ->and($guesser->guess('Nata'))->toBe(IngredientCategory::DairyEggs)
+        ->and($guesser->guess('Nata para cocinar'))->toBe(IngredientCategory::DairyEggs)
+        ->and($guesser->guess('Fideos'))->toBe(IngredientCategory::PastaRiceLegumes)
+        ->and($guesser->guess('Tomate triturado'))->toBe(IngredientCategory::Preserves)
+        ->and($guesser->guess('Tomate frito'))->toBe(IngredientCategory::SaucesOils);
+
+    // Through the app, when creating a food.
+    $this->post(route('inventory.store'), ['ingredient' => 'Caldo de pollo', 'create_ingredient' => '1', 'location' => 'pantry', 'quantity' => '1', 'unit' => 'l'])
+        ->assertSessionHasNoErrors();
+    expect(Ingredient::where('name', 'Caldo de pollo')->sole()->category)->toBe(IngredientCategory::SoupsBroths);
+});
+
+test('existing foods are not reclassified when editing, even if their name is now in the dictionary', function () {
+    $caldo = Ingredient::factory()->for($this->household)->named('Caldo')->create(['category' => IngredientCategory::SaucesOils]);
+    $crema = Ingredient::factory()->for($this->household)->named('Crema de pollo')->create(['category' => null]);
+
+    $this->put(route('ingredients.update', $caldo), ['name' => 'Caldo', 'category' => 'sauces_oils'])->assertSessionHasNoErrors();
+    $this->put(route('ingredients.update', $crema), ['name' => 'Crema de pollo', 'category' => ''])->assertSessionHasNoErrors();
+
+    expect($caldo->fresh()->category)->toBe(IngredientCategory::SaucesOils)
+        ->and($crema->fresh()->category)->toBeNull();
+});
+
+test('every dictionary key is a category, and the icons follow the order of the enum (shopping aisles)', function () {
+    $cases = array_map(fn (IngredientCategory $category) => $category->value, IngredientCategory::cases());
+
+    expect(array_diff(array_keys(config('ingredient_categories')), $cases))->toBe([])
+        ->and(array_search('soups_broths', $cases, true))->toBe(9);
+
+    // The keys of CATEGORY_ICONS in visuals.ts give the order of the aisles of the list.
+    $visuals = file_get_contents(resource_path('js/lib/visuals.ts'));
+    preg_match('/const CATEGORY_ICONS[^{]*\{(.*?)\n\};/s', $visuals, $block);
+    preg_match_all('/^\s*(\w+):/m', $block[1], $keys);
+
+    expect($keys[1])->toBe($cases);
 });
 
 test('CA-19: the category chosen by the user wins, it can be corrected, and nothing is duplicated', function () {

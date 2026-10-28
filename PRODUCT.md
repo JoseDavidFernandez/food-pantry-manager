@@ -18,7 +18,7 @@ Food & Pantry Manager reúne recetario, inventario de casa, menú semanal y list
 
 ## Positioning
 
-La lista de la compra se deduce sola del menú, de las recetas y de lo que hay en casa, y explica cada cantidad en el lenguaje de la compra real («Comprar 5 bolsas · 1 bolsa = 20 unidades»). Las existencias previstas descuentan lo que el menú ya ha usado sin pedir confirmaciones diarias.
+La lista de la compra se deduce sola del menú, de las recetas y de lo que hay en casa, y explica cada cantidad en el lenguaje de la compra real («Faltan 85 unidades · Para comprar: 5 bolsas, 1 bolsa = 20 unidades»). Las existencias previstas descuentan lo que el menú ya ha usado sin pedir confirmaciones diarias.
 
 ## Operating Context
 

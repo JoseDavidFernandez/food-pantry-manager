@@ -15,6 +15,7 @@ import {
     Refrigerator,
     ShoppingBasket,
     Snowflake,
+    Soup,
     Wheat,
 } from '@lucide/vue';
 
@@ -32,6 +33,7 @@ const CATEGORY_ICONS: Record<string, Component> = {
     pasta_rice_legumes: Wheat,
     cold_cuts: Ham,
     preserves: Package,
+    soups_broths: Soup,
     drinks: CupSoda,
     sauces_oils: Droplet,
     other: ShoppingBasket,

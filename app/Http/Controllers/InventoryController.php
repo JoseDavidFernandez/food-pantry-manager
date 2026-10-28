@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Ingredients\BasicFoods;
+use App\Actions\Ingredients\FoodUnitsEditor;
+use App\Actions\Ingredients\FoodUnitsRefused;
 use App\Actions\Ingredients\IngredientCatalog;
 use App\Actions\Inventory\FoodRestock;
 use App\Actions\Inventory\StockEstimator;
@@ -9,6 +12,7 @@ use App\Actions\Inventory\StockManager;
 use App\Enums\IngredientCategory;
 use App\Enums\StorageLocation;
 use App\Enums\Unit;
+use App\Enums\UnitGroup;
 use App\Http\Requests\Inventory\AdjustInventoryItemRequest;
 use App\Http\Requests\Inventory\StoreInventoryItemRequest;
 use App\Http\Requests\Inventory\UpdateInventoryItemRequest;
@@ -24,7 +28,9 @@ use App\Support\Week;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -35,7 +41,7 @@ class InventoryController extends Controller
 
     public function __construct(private readonly StockManager $stock) {}
 
-    public function index(Request $request, IngredientCatalog $catalog, StockEstimator $estimator, FoodRestock $restock): Response
+    public function index(Request $request, IngredientCatalog $catalog, StockEstimator $estimator, FoodRestock $restock, BasicFoods $basics): Response
     {
         /** @var User $user */
         $user = $request->user();
@@ -106,6 +112,11 @@ class InventoryController extends Controller
                 'id' => $ingredient->id,
                 'name' => $ingredient->name,
                 'default_unit' => $ingredient->default_unit?->value,
+                // Unit groups comparable with its usual unit, directly or through its own
+                // conversions (RN-06, RN-40): «Añadir al inventario» warns about any other one.
+                'unit_groups' => self::comparableGroups($ingredient),
+                // What one pack holds when its conversions say so («1 paquete = 1 kg»), per unit.
+                'pack_contents' => self::packContents($ingredient),
                 'stock_count' => $ingredient->inventory_items_count,
                 'recipe_count' => $ingredient->recipe_ingredients_count,
                 'in_menus' => $ingredient->planned_dish_ingredients_count > 0,
@@ -142,6 +153,9 @@ class InventoryController extends Controller
                 ])->all(),
             ],
             'suggestions' => $suggestions,
+            // Usual foods to add to the catalog (RN-49): only in «Sin existencias» and for
+            // members who can write; viewers only read.
+            'basics' => $unstocked && $user->can('household.write') ? $basics->suggestions($household) : [],
             'similar' => $similar,
             'typed' => $similar === [] ? null : $typed,
             'units' => Unit::options(),
@@ -151,20 +165,80 @@ class InventoryController extends Controller
         ]);
     }
 
-    public function store(StoreInventoryItemRequest $request, IngredientCatalog $catalog): RedirectResponse
+    /**
+     * @return array<string, string>
+     */
+    private static function packContents(Ingredient $ingredient): array
+    {
+        $units = FoodUnits::from($ingredient->conversions, $ingredient->purchase_unit);
+        $contents = [];
+
+        foreach (Unit::cases() as $unit) {
+            $target = $units->canonicalGroup($unit->group());
+
+            if ($unit->kind() === 'pack' && $target !== $unit->group()) {
+                $contents[$unit->value] = $units->convert(Quantity::of('1', $unit), $target)?->readable() ?? '';
+            }
+        }
+
+        return array_filter($contents);
+    }
+
+    /**
+     * @return list<string>
+     */
+    private static function comparableGroups(Ingredient $ingredient): array
+    {
+        if ($ingredient->default_unit === null) {
+            return [];
+        }
+
+        $units = FoodUnits::from($ingredient->conversions, $ingredient->purchase_unit);
+        $usual = $ingredient->default_unit->group();
+
+        return array_values(array_map(
+            fn (UnitGroup $group) => $group->value,
+            array_filter(UnitGroup::cases(), fn (UnitGroup $group) => $units->connected($usual, $group)),
+        ));
+    }
+
+    public function store(StoreInventoryItemRequest $request, IngredientCatalog $catalog, FoodUnitsEditor $units): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
         $household = $user->currentHousehold();
+        $content = $request->packContent();
+        $pack = $request->quantity()->unit;
 
-        $ingredient = $request->resolvedIngredient()
-            ?? $catalog->findOrCreate($household, $request->string('ingredient')->toString(), $request->category());
+        [$ingredient, $item, $saved] = DB::transaction(function () use ($request, $catalog, $units, $household, $content, $pack) {
+            $ingredient = $request->resolvedIngredient()
+                ?? $catalog->findOrCreate($household, $request->string('ingredient')->toString(), $request->category());
 
-        $item = $this->stock->add($household, $ingredient, $request->location(), $request->quantity(), $request->label());
+            // The content of each pack is a conversion of the food (RN-40), saved once: the next
+            // time it is already known. With no purchase format yet, the pack becomes it (RN-41).
+            $saved = null;
+
+            if ($content !== null) {
+                try {
+                    $units->addConversion($ingredient, $pack, $content['factor'], $content['unit']);
+                } catch (FoodUnitsRefused $refused) {
+                    throw ValidationException::withMessages(['content_quantity' => $refused->getMessage()]);
+                }
+
+                if ($ingredient->purchase_unit === null) {
+                    $units->setPurchaseUnit($ingredient, $pack);
+                }
+
+                $saved = '1 '.$pack->label('1').' = '.Quantity::of($content['factor'], $content['unit'])->format();
+            }
+
+            return [$ingredient, $this->stock->add($household, $ingredient, $request->location(), $request->quantity(), $request->label()), $saved];
+        });
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => "{$ingredient->name}: ahora hay {$item->toQuantity()->format()} en {$item->location->label()}.",
+            'message' => "{$ingredient->name}: ahora hay {$item->toQuantity()->format()} en {$item->location->label()}."
+                .($saved === null ? '' : " Guardado en su ficha: {$saved}."),
         ]);
 
         return back();

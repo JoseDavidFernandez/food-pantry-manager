@@ -18,6 +18,7 @@ enum IngredientCategory: string
     case PastaRiceLegumes = 'pasta_rice_legumes';
     case ColdCuts = 'cold_cuts';
     case Preserves = 'preserves';
+    case SoupsBroths = 'soups_broths';
     case Drinks = 'drinks';
     case SaucesOils = 'sauces_oils';
     case Other = 'other';
@@ -34,6 +35,7 @@ enum IngredientCategory: string
             self::PastaRiceLegumes => 'Pasta, arroz y legumbres',
             self::ColdCuts => 'Embutidos',
             self::Preserves => 'Conservas y envasados',
+            self::SoupsBroths => 'Caldos, cremas y sopas',
             self::Drinks => 'Bebidas',
             self::SaucesOils => 'Salsas, aceites y condimentos',
             self::Other => 'Otros',

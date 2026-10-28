@@ -43,6 +43,7 @@ Se distinguen tres cosas: el **alimento** (su definición en el catálogo: nombr
 ## 3. Inventario
 Único apartado para gestionar los alimentos.
 1. Pestañas: Todo, Frigorífico, Congelador, Despensa y **Sin existencias** (alimentos del catálogo que no tienes en casa). Búsqueda (también por alias) y filtro de categoría opcionales. **[E]** por pestaña.
+   - **Alimentos habituales** (RN-49, 2026-10-28): debajo de «Sin existencias», sugerencias del diccionario de categorías que el hogar aún no tiene, plegadas por categoría y filtradas por la búsqueda. Un toque crea el alimento en el catálogo, sin existencias; si se parece a otro, se pide confirmación («Crear «X» igualmente»). Sin catálogo, el estado vacío invita a empezar por ellas; si no queda ninguna o no coincide con la búsqueda, la sección no aparece. El lector no la ve.
 2. «Añadir al inventario»: alimento, ubicación, cantidad, unidad y etiqueta opcional. Un alimento nuevo se crea marcando «Es un alimento nuevo», con categoría opcional. Si ya existe la fila compatible (RN-08), se suma a la existente según RN-06; una unidad de otro grupo (p. ej. botes frente a g) crea una fila separada. Desde «Sin existencias», «Añadir al inventario» abre el diálogo con el alimento ya escrito.
 3. Existencias: ajuste rápido y edición completa (cantidad, unidad compatible, ubicación y etiqueta); al moverlas a una ubicación con fila compatible, se suman.
    - **Previsto** (RN-44, 2026-10-22): si las comidas pasadas del menú han usado parte de una fila, la tarjeta muestra «≈ X previstos · registrado Y» y un desplegable «≈ Es una estimación. ¿Por qué?» con las comidas que lo explican. No hay que hacer nada; si no coincide con lo que hay, se pulsa la cantidad y se corrige (es un recuento). El ajuste ± parte del previsto, y la edición viene prellenada con él.
@@ -74,7 +75,7 @@ Se distinguen tres cosas: el **alimento** (su definición en el catálogo: nombr
 
 ## 7. Lista de la compra
 1. «Lista de la compra» abre la lista de los próximos 7 días. Arriba, las fechas del periodo, el botón del periodo (diálogo con «Próximos 7/14/30 días» o «Desde / Hasta», RN-36), «Añadir» y el resumen «N por comprar · M en el carro · K para revisar» (RN-48). Cada periodo tiene su lista y al volver a él recupera los cambios y lo comprado.
-2. Líneas por nombre (orden alfabético). Por cada una: el nombre, «Comprar X» (con el contenido del envase si lo hay), insignias («Mínimo en casa», «Se acabó», «En el carro»…) y «Ver cálculo» plegado. **[E]** «No necesitas comprar nada en este periodo».
+2. Líneas por nombre (orden alfabético). Por cada una: el nombre, «Faltan X» y, si se compra en envases, «Para comprar: N envases (contenido)», insignias («Mínimo en casa», «Se acabó», «En el carro»…) y «Ver cálculo» plegado. **[E]** «No necesitas comprar nada en este periodo».
    - Al pie: «Registrar compra», «Ver menú», «Historial» y «Compras registradas (N)» plegado.
    - «Historial» lleva a todas las listas: actuales, terminadas y semanales anteriores. Las del historial se ven en solo lectura.
 3. Por línea: marcar comprado (un toque, RN-25), editar cantidad o unidad, eliminar **[C]**, "Marcar como revisada" si está marcada.
