@@ -14,9 +14,9 @@ Convenciones: **[C]** requiere confirmación · **[E]** estado vacío · **[X]**
    - **Lector:** aviso «Modo lectura» en todas las páginas y sin acciones de modificación.
 2. Login, logout y recuperación de contraseña del starter kit. En desarrollo no se exige verificar el email.
 3. Inicio (RN-34), por orden de prioridad:
-   1. **Hoy:** comida y cena del día actual en un bloque destacado, con enlace a la receta. Si falta alguna, «Sin planificar» y, con el menú en borrador, «Planificar».
-   2. **Menú de la semana:** tabla compacta de los siete días con comida y cena; hoy resaltado; estado (borrador o cerrado) y «X de 14».
-   3. **Lista de la compra:** hasta seis líneas pendientes con su cantidad, «y N más» y «Ver la lista completa». Sin lista: «Se genera al cerrar el menú».
+   1. **Hoy:** comida y cena del día actual en un bloque destacado, con enlace a la receta. Si falta alguna, «Sin planificar» y «Planificar comida» o «Planificar cena».
+   2. **Menú de la semana:** tabla compacta de los siete días con comida y cena; hoy resaltado; el recuento «X de 14» o, si no hay menú, «Sin planificar». El menú no tiene estado: se planifica de forma continua (desde el 2026-10-21).
+   3. **Lista de la compra** de los próximos 7 días (RN-36): hasta seis líneas pendientes con su cantidad, «y N productos más» y «Ver la lista completa». Si no falta nada: «No te falta nada para las recetas de los próximos 7 días».
    4. Accesos a Inventario, Recetas y Planificar.
 
 Navegación principal: Inicio, Menú, Lista de la compra, Inventario y Recetas. No hay un apartado «Ingredientes» (decisión del usuario del 2026-10-21): `/ingredients` redirige a Inventario.
@@ -37,7 +37,7 @@ Se distinguen tres cosas: el **alimento** (su definición en el catálogo: nombr
 - **Detalle con preparaciones:** enlace a cada preparación con sus raciones escaladas y «Todo lo que necesitas» combinado; las alternativas se muestran como «X o Y». Una preparación muestra en qué recetas se usa.
 - **Listar:** búsqueda; filtro para ver archivadas. **[E]** "Crea tu primera receta".
 - **Detalle:** selector de raciones con cantidades escaladas (RN-13), solo visual.
-- **Editar una receta usada en menús en borrador:** aviso de que el cambio afectará al próximo cierre.
+- **Editar una receta que ya usaron comidas pasadas** (RN-45): al guardar, el aviso explica que los platos que ya han pasado conservan la receta anterior en el inventario previsto y que los próximos usan la nueva.
 - **Eliminar [C]:** solo si no está referenciada. Si lo está, se ofrece **Archivar** (RN-14). Las archivadas se pueden restaurar.
 
 ## 3. Inventario

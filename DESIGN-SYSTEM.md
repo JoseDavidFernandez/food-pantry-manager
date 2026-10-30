@@ -13,9 +13,9 @@
 - Un título de página (`h1`) y una acción principal visible por pantalla.
 - Acciones secundarias agrupadas (menú de acciones o botones `outline`/`ghost`).
 - En listas: nombre del ingrediente como texto principal; cantidad y unidad como dato destacado.
-- Estado del menú (borrador/cerrado) siempre visible en su cabecera.
+- El menú no tiene estado: se planifica de forma continua y no se cierra (desde el 2026-10-21). Los días pasados se atenúan con «Pasado» y la compra se calcula por periodo en la lista (RN-36).
 
-## 3. Tipografía (provisional)
+## 3. Tipografía
 - Archivo variable, servida desde la aplicación; títulos de página y de sección en anchura condensada y mayúsculas (`font-display`). Detalle en [DESIGN.md](DESIGN.md).
 - Escala Tailwind: `text-sm` (metadatos), `text-base` (cuerpo), `text-lg`/`text-xl` (secciones), `text-2xl`/`text-3xl` (título).
 - `tabular-nums` en cantidades.
@@ -54,7 +54,7 @@
 | Lista de la compra | (RN-48, 2026-10-23.) Cabecera con las fechas en corto; barra con el botón del periodo (diálogo con botones de periodo y fechas en una columna en móvil) y «Añadir» (diálogo); resumen de recuentos. Fila con checkbox de 44 px (casilla visible de 28 px), el nombre, «Faltan **X**» y, si se compra en envases, «Para comprar: **N envases** (contenido)», insignias y un `<details>` «Ver cálculo» con chevron que gira al abrir. «En el carro»: fondo `muted` e insignia; el tachado solo en lo recibido. Avisos del cálculo y «Compras registradas» en `<details>` plegados; las acciones secundarias, al pie. Las listas del historial se muestran con un aviso y sin acciones. |
 | Básicos (RN-47) | Ficha: sección «Mínimo en casa» con texto de ayuda, «Al menos» + unidad, «Guardar mínimo» y «Quitar el mínimo» (fantasma). Tarjeta de existencias: «Se acabó» en el menú «⋯», con confirmación que nombra las ubicaciones. En la lista, insignias «Mínimo en casa» y «Se acabó». |
 | Recepción | Fila por línea con cantidad real editable y ubicación; acción principal fija al pie en móvil. |
-| Confirmaciones | AlertDialog que describe la consecuencia; botón con verbo concreto ("Cerrar menú", no "Aceptar"). |
+| Confirmaciones | `Dialog` (`@/components/ui/dialog`): título y descripción que explican la consecuencia, y al pie «Cancelar» (`DialogClose`) y un botón con verbo concreto («Sí, se acabó» o «Salir del hogar», no «Aceptar»). Excepciones: el borrado del catálogo en la ficha del alimento se confirma en línea, y salir de «Registrar compra» con artículos marcados usa la confirmación nativa del navegador. |
 | Feedback | Toast para éxito; Alert inline para errores. |
 | Carga | Skeleton en listados; botón desactivado con indicador al enviar. |
 | Vacíos | Icono opcional, frase breve y acción principal. |
@@ -84,7 +84,8 @@ Iconos: Lucide. Categorías (`resources/js/lib/visuals.ts`): manzana (frutas), z
 - Sin scroll horizontal de página.
 - Formularios de una columna en móvil.
 
-## 8. Pendiente de validar (no bloqueante)
-- Identidad visual: «Baldosa hidráulica» aplicada con logotipo propio (baldosa) y Archivo (rediseño R1–R7). La validación visual de cada fase la hizo el usuario; queda su prueba intensiva desde cero.
-- Modo oscuro: revisado pantalla a pantalla en el rediseño (contraste y controles medidos en claro y oscuro).
-- Navegación en móvil: menú lateral desplegable del kit, que se cierra al empezar cualquier visita, también al pulsar la página actual (comprobado por E2E a 360 px). Una barra inferior queda como alternativa futura.
+## 8. Validación y mejoras futuras
+- Identidad visual «Baldosa hidráulica» (rediseño R1–R7, con logotipo de baldosa y Archivo): validada por el usuario en el navegador (2026-10-29), tras su prueba manual intensiva (2026-10-28).
+- Modo oscuro: medido pantalla a pantalla en el rediseño (contraste y controles en claro y oscuro) y validado por el usuario (2026-10-29).
+- Accesibilidad: la revisión formal WCAG 2.2 AA (CA-18) sigue pendiente y es una tarea de la Fase 7 ([ROADMAP.md](ROADMAP.md)).
+- Navegación en móvil: menú lateral desplegable del kit, que se cierra al empezar cualquier visita, también al pulsar la página actual (comprobado por E2E a 360 px). **Mejora futura:** una barra inferior.

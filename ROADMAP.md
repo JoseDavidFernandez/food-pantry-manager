@@ -66,21 +66,28 @@ El estado de cada tarea se registra solo en [PROJECT-STATUS.md](PROJECT-STATUS.m
 **Criterios de cierre:** CA-14 en verde; flujo menú → lista → recepción → inventario verificado (E2E o prueba manual documentada).
 
 ## Fase 7 — Publicación
-**Prerrequisito: cambios de producto (2026-10-21).** No son tareas de publicación. El usuario debe validar en el navegador:
+**Prerrequisito: cambios de producto (2026-10-21) — cumplido.** No son tareas de publicación. El usuario los validó en el navegador: la prueba manual intensiva el 2026-10-28 y el rediseño (con el modo oscuro), las categorías y la búsqueda real de imágenes el 2026-10-29 (registro en [PROJECT-STATUS.md](PROJECT-STATUS.md)). Alcance validado:
 - el rediseño, las categorías (RN-31) y las imágenes (RN-32);
 - la reorganización: Inventario como único apartado de alimentos, el calendario con recetario y arrastrar y soltar (RN-33), e Inicio como panel de resumen (RN-34);
 - la compra por periodo: lista persistente sin cierre del menú, historial, «No comido» y clasificación automática (RN-31, RN-36, RN-37).
 
 CA-19 a CA-22 están cubiertos por tests automáticos y, salvo la búsqueda real de imágenes, por la sesión E2E.
 **Tareas** (cada despliegue o cambio en servicios externos, con autorización explícita):
-1. **CI con MySQL:** workflow con MySQL de la versión de producción, `composer ci:check`, `npm run build` y `npm audit` (DT-06).
-2. **Compatibilidad de MySQL:** elegir la versión de producción (DT-07; 8.4 LTS recomendada) y ejecutar la suite contra ella.
-3. **Entorno y despliegue:** proveedor, `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, colas y tareas programadas si hacen falta, `storage` persistente (imágenes de ingredientes) y procedimiento de despliegue (DT-06).
-4. **Copias de seguridad y restauración** de la base y de `storage/app/private`, probadas con una restauración real.
-5. **Correo:** proveedor, remitente, verificación de email y recuperación de contraseña en producción (DT-05).
-6. **Autenticación en producción:** verificación en dos pasos y llaves de acceso (DT-05).
-7. **Seguridad:** revisión antes de publicar (cabeceras, CSP con los orígenes de imágenes de búsqueda, límites de peticiones, dependencias, `vite-plus` ≥ 1.1.0 o mitigación documentada).
-8. **Accesibilidad:** WCAG 2.2 AA en las pantallas principales, a 360 px y en modo oscuro (CA-18).
-9. **Proveedores de imágenes:** `INGREDIENT_IMAGES_CONTACT` con un contacto del servicio y la decisión de mantener activada la búsqueda. Si algún día se usa un proveedor con clave, la clave va solo en el servidor (TECHNICAL-DESIGN §10).
+1. **Versión de MySQL de producción (DT-07):** elegirla con el proveedor de hosting si ya está decidido; si no, valorar MySQL 8.4 LTS. Registrar la decisión en [TECHNICAL-DESIGN.md §8](TECHNICAL-DESIGN.md). La compatibilidad no se da por supuesta hasta la tarea 2.
+2. **Compatibilidad con la versión elegida:** migraciones y suite Pest contra una base de pruebas aislada de esa versión (autenticación con `pdo_mysql`, restricciones CHECK, intercalaciones y claves foráneas), sin tocar la instalación de MAMP. Instalar o arrancar otra versión de MySQL requiere autorización explícita.
+3. **Alerta de `vite-plus` y política de `npm audit`:** decidir entre migrar a `vite-plus` ≥ 1.1.0 (propuesta en [TECHNICAL-DESIGN.md §7.1](TECHNICAL-DESIGN.md), junto con DT-10) o aceptar la alerta con una mitigación documentada y fecha de revisión. Fijar qué parte de `npm audit` bloquea la CI a partir de resultados verificados en ese momento (por ejemplo, dependencias de producción frente al árbol completo).
+4. **CI con MySQL** (DT-06), tras las tareas 1–3:
+   - servicio MySQL con la versión elegida en la tarea 1;
+   - pasos explícitos (`composer install`, `npm ci`, generar `APP_KEY`, migraciones, `composer ci:check`, `npm run build` y `npm audit` según la política de la tarea 3), sin depender de `composer setup`, que copia `.env.example` (SQLite) y migra sobre esa conexión;
+   - migraciones y tests solo contra `food_pantry_manager_test`, con el guardián de `tests/TestCase.php`; en la CI no existe base de desarrollo;
+   - credenciales efímeras y exclusivas de la CI, como *secrets* o variables del repositorio, nunca las de MAMP ni las de producción;
+   - `APP_KEY` generada en cada ejecución.
+5. **Entorno y despliegue:** proveedor, `APP_ENV=production`, `APP_DEBUG=false`, HTTPS, colas y tareas programadas si hacen falta, `storage` persistente (imágenes de ingredientes) y procedimiento de despliegue (DT-06).
+6. **Copias de seguridad y restauración** de la base y de `storage/app/private`, probadas con una restauración real.
+7. **Correo:** proveedor, remitente, verificación de email y recuperación de contraseña en producción (DT-05).
+8. **Autenticación en producción:** verificación en dos pasos y llaves de acceso (DT-05).
+9. **Seguridad:** revisión antes de publicar (cabeceras, CSP con los orígenes de imágenes de búsqueda, límites de peticiones, dependencias, comprobación de lo decidido en la tarea 3 sobre `vite-plus`).
+10. **Accesibilidad:** WCAG 2.2 AA en las pantallas principales, a 360 px y en modo oscuro (CA-18).
+11. **Proveedores de imágenes:** `INGREDIENT_IMAGES_CONTACT` con un contacto del servicio y la decisión de mantener activada la búsqueda. Si algún día se usa un proveedor con clave, la clave va solo en el servidor (TECHNICAL-DESIGN §10).
 
 **Criterios de cierre:** todos los CA verificados (incluidos CA-18, CA-19 y CA-20); copia de seguridad y restauración probadas; CI en verde contra la versión de MySQL de producción; aplicación accesible en el entorno acordado.
