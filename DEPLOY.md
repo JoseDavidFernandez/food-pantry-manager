@@ -18,7 +18,13 @@ Plesk Git descarga el repositorio privado de GitHub por SSH usando una deploy ke
 1. Hacer push a `main` en GitHub.
 2. En Plesk: Subscriptions → foodpantry… → Git → **Pull**.
 3. Pulsar **Deploy**.
-4. Acciones después del despliegue: <!-- COMPLETAR con lo que viste en Plesk o haces a mano -->
+4. Plesk no tiene activadas las acciones post-despliegue: solo copia los
+   archivos a `food-pantry-manager/`. Si el despliegue incluye cambios de
+   código, hay que revisar a mano (pendiente de automatizar en Plesk):
+   - Migraciones: `php artisan migrate --force`
+   - Dependencias, si cambia `composer.lock`: `composer install --no-dev --optimize-autoloader`
+   - Cachés de Laravel: `php artisan optimize:clear`
+   - Frontend, si cambian JS o CSS: compilar los assets con Vite
 
 ## Comprobar qué commit está desplegado
 En el servidor:
