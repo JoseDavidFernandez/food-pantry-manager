@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -44,6 +45,13 @@ class AppServiceProvider extends ServiceProvider
     protected function configureDefaults(): void
     {
         Date::use(CarbonImmutable::class);
+
+        // Build absolute links (password-reset and verification emails, invitations) from APP_URL
+        // and not from the request host, so a forged Host header cannot hijack them. Left off in
+        // local so `php artisan serve` on another host keeps working.
+        if (! app()->environment('local')) {
+            URL::forceRootUrl(config('app.url'));
+        }
 
         DB::prohibitDestructiveCommands(
             app()->isProduction(),

@@ -20,6 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Reject requests whose Host header is not the application URL (no proxy in front), so a
+        // forged Host cannot leak into generated links such as password-reset emails.
+        $middleware->trustHosts(subdomains: false);
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
