@@ -213,6 +213,14 @@ Siete comprobaciones satisfactorias:
   - **Comportamiento:** sin cambios observados. `oxfmt` no reformateó ningún archivo y `oxlint` no señaló nada nuevo.
   - **Servidor:** el despliegue ejecuta `npm install` (paso 5 del Toolkit) y `npm run build`, así que instalará el lock nuevo. Requiere Node ^22.18, ^24.11 o ≥ 26: el servidor usa Node 26.
 
+**Política de `npm audit` en la CI (decisión del usuario, 2026-11-11).** Se implementa con la tarea de la CI (Fase 7, DT-06); hasta entonces no hay CI activa.
+- **Bloquea:** la CI ejecuta `npm audit --audit-level=high` y falla con cualquier vulnerabilidad `high` o `critical`.
+- **No bloquea:** las `moderate` y `low`. Se revisan a mano con el criterio de la migración del 2026-11-11:
+  - ¿llega al bundle del navegador? Se comprueba con un build con sourcemaps, sin deducirlo de `dependencies`/`devDependencies`;
+  - ¿usa el código la parte afectada, y se dan las condiciones del aviso?
+  - ¿qué arreglo hay: compatible, actualización mayor, override o ninguno?
+- **Riesgo aceptado:** si una `moderate` o `low` se acepta sin corregir, se documenta en esta sección con el aviso (GHSA), la cadena de dependencias, el motivo y cuándo revisarla.
+
 ### 7.2 Sesión E2E con Playwright (2026-10-21)
 
 - `npm run test:e2e` (`playwright.config.ts`, pruebas en `e2e/`). Arranca `php artisan serve` en `127.0.0.1:8000` (o reutiliza el que esté en marcha) y usa los assets compilados (`npm run build`; se detiene si hay `public/hot`).

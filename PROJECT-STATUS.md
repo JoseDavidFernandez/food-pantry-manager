@@ -17,17 +17,21 @@
 - **Simplificación:** Fase A (existencias previstas, «Guardar lo marcado») validada por ti; **Fase B cerrada (2026-10-23)**: lista más clara, móvil y accesibilidad, «Mínimo en casa» y «Se acabó» (RN-47, RN-48, CA-39 a CA-42). Prueba manual intensiva completada y aprobada por ti (2026-10-28).
 - **Hallazgos de tu prueba manual** (2026-10-28, commit `6c2268e`): E1, E2 y M1–M4 implementados y verificados por tests y E2E (fila en «Hecho y verificado»), con tu visto bueno manual (2026-10-28).
 
-**Fase 7 (publicación) en curso:** la aplicación está desplegada desde el 2026-10-30 en https://foodpantry.josedavidfernandezcomino.com (despliegue hecho por el usuario, antes de las tareas 1–4 del ROADMAP; detalle en «Hecho y verificado» y «Pendiente para la Fase 7»). Siguiente: tus pruebas guiadas en producción (ver «Siguiente paso»).
+**Fase 7 (publicación) en curso:** la aplicación está desplegada desde el 2026-10-30 en https://foodpantry.josedavidfernandezcomino.com (despliegue hecho por el usuario, antes de las tareas 1–4 del ROADMAP; detalle en «Hecho y verificado» y «Pendiente para la Fase 7»). La prueba guiada en producción está hecha (declarado por el usuario, ver abajo). Siguiente: la CI (ver «Siguiente paso») y después planificar la v2.
+
+**Decisiones para la v2** (tomadas tras la prueba guiada; sin planificar ni registrar todavía en el PRD):
+- quitar la sección Inventario → Imagen (código de barras, búsqueda de imágenes y producto envasado) y dejar solo los iconos de categoría (afecta a RN-32 y CA-20);
+- rediseñar el formulario de recetas.
 **Resumen:** Laravel con MySQL, autenticación en español, hogar por usuario con ámbito y policies (RN-02), ingredientes con alias e inventario, recetas (con archivado) menú semanal de 14 espacios con recetas o platos sencillos y comparación de necesidades con el inventario, cierre del menú con lista de la compra editable y reapertura con conciliación, y recepción de la compra en una o varias veces que actualiza el inventario. Commits en orden cronológico: `b7c5c64` (V1, multiusuario y fases A y B) → `731b3a7` (rediseño) → `6c2268e` (hallazgos de la prueba manual) → `df227ab` (documentación) → `cfcac54` (Dependabot en pausa) → `bb4bc19` («docs: record first GitHub publication and paused automation in status»), donde están `main` y `feature/mysql-connection`, en local y en GitHub. Repositorio privado en GitHub (`origin`, `JoseDavidFernandez/food-pantry-manager`) con `main` como rama predeterminada; `feature/mysql-connection` se conserva. GitHub Actions y Dependabot Alerts desactivados, y las actualizaciones de versión de Dependabot en pausa (`open-pull-requests-limit: 0`).
 
 ## Siguiente paso
-Prueba guiada en producción (el usuario la hará el fin de semana del 31-10/01-11-2026): crear el hogar, alimento con existencias y ajuste rápido, receta con un ingrediente nuevo, comida futura en el menú, lista de la compra e imagen de un alimento. Sirve también como primera comprobación con MariaDB 10.5. Anotar los fallos con el paso y lo que se ve.
+Preparar la CI de la Fase 7 (tarea 4 de «Pendiente para la Fase 7», DT-06): workflow con base de pruebas aislada y credenciales efímeras, reactivar GitHub Actions y Dependabot, y `npm audit --audit-level=high` según la política de TECHNICAL-DESIGN §7.1. Después, planificar la v2.
 
 ## Esperando decisión del usuario
 - **Registrar el entorno real en TECHNICAL-DESIGN** (DT-06 y DT-07): producción en IONOS VPS M+ con Plesk y **MariaDB 10.5** (no MySQL 8.4); la base de producción ya está decidida de hecho y queda pendiente su compatibilidad. Correo con Brevo (DT-05).
 - **Fase C** (copiar semanas o días, notas, altas más rápidas): no empezada; decidir si entra en la V1 y autorizarla.
 - **Revisar e integrar la rama `chore/vite-plus-1x`** (migración a `vite-plus` 1.4.0, decidida por el usuario el 2026-11-11; fila en «Hecho y verificado»). Sin push.
-- **Cambio de alcance registrado en el PRD:** el código de barras se usa solo para buscar la imagen de un producto envasado (RN-32). Confirmar que es lo que querías.
+- **Cambio de alcance registrado en el PRD:** el código de barras se usa solo para buscar la imagen de un producto envasado (RN-32). Queda superado por la decisión para la v2 de quitar la sección Imagen y dejar solo iconos (arriba); se resolverá al registrar la v2 en el PRD.
 - **Datos de prueba con unidades incompatibles (propuesta: mantenerlos como casos de RN-22):** «Zanahoria» tiene 300 g en inventario pero las recetas la piden en unidades, y «Tomate frito» tiene 1 bote pero la pasta lo pide en gramos. No se restan y aparecen como «Revisar unidades». Alternativa: pasar las existencias a unidades/botes o las recetas a gramos.
 
 **Decisiones resueltas (2026-10-20):**
@@ -107,6 +111,7 @@ Prueba guiada en producción (el usuario la hará el fin de semana del 31-10/01-
 - **Prueba manual intensiva completada y aprobada** (2026-10-28): el usuario comprobó los comportamientos que antes no funcionaban bien, incluidos los hallazgos E1, E2 y M1–M4, y da el visto bueno al resultado. No hay registro detallado de los casos probados.
 - **Prerrequisito de la Fase 7 validado en el navegador** (2026-10-29): el usuario validó el rediseño «Baldosa hidráulica» (commit `731b3a7`, DESIGN-SYSTEM §4 y [DESIGN.md](DESIGN.md)), incluido el modo oscuro, las categorías (12 más «Caldos, cremas y sopas», DATA-MODEL §2) y la búsqueda real de imágenes contra Wikimedia Commons y Open Food Facts.
 - **Despliegue de producción** (2026-10-30): hecho por el usuario por SSH desde GitHub (`composer install --no-dev --optimize-autoloader`, Node y `npm run build` en el servidor, `php artisan migrate`). No se ha confirmado qué commit está desplegado. Registro y verificación del correo funcionando en producción.
+- **Prueba guiada en producción hecha** (declarado el 2026-11-11). De ella salen las dos decisiones para la v2 (arriba). No hay registro de los pasos probados ni de si apareció algún fallo propio de MariaDB 10.5; la suite Pest sigue sin ejecutarse contra MariaDB.
 - La skill `fpm-verify` es detectada por Claude Code (2026-10-20). La carga del agente `fpm-reviewer` en una sesión nueva está pendiente de confirmar.
 
 ## Pendiente (no bloquea fases cerradas)
@@ -125,7 +130,7 @@ Decisiones menores de las Fases 2 a 6 en [DATA-MODEL.md §9](DATA-MODEL.md).
 Orden recomendado (tareas detalladas en [ROADMAP.md](ROADMAP.md) › Fase 7; nada se despliega sin autorización explícita). **La aplicación ya está desplegada (2026-10-30)**, antes de cerrar las tareas 2–4:
 1. ~~Validar el rediseño, las categorías y las imágenes en el navegador (prerrequisito).~~ **Cumplido (2026-10-29)**, declarado por el usuario.
 2. Base de datos de producción: **MariaDB 10.5.29** (la de Plesk en AlmaLinux 9), no MySQL 8.4. Las 26 migraciones se aplicaron sin error, pero la suite Pest nunca se ha ejecutado contra MariaDB. Decisión del usuario: comprobar la compatibilidad junto con sus pruebas. La versión 10.5 ya no tiene soporte de MariaDB; AlmaLinux sigue publicando parches (pendiente de confirmar).
-3. Decidir la migración de `vite-plus` y la política de `npm audit`, antes de la CI. **Migración decidida y hecha en la rama `chore/vite-plus-1x` (2026-11-11), pendiente de integrar.** La política de `npm audit` en la CI sigue sin decidir.
+3. ~~Decidir la migración de `vite-plus` y la política de `npm audit`, antes de la CI.~~ **Decidido (2026-11-11):** migración hecha en la rama `chore/vite-plus-1x`, pendiente de integrar; política de `npm audit` registrada en TECHNICAL-DESIGN §7.1, que se implementa con la tarea 4.
 4. CI con la base de producción (DT-06), con base de pruebas aislada y credenciales efímeras.
 5. ~~Entorno de producción y despliegue.~~ **Hecho en lo básico (2026-10-30):** IONOS VPS M+, Plesk, Apache, PHP 8.3.36 FPM; `storage` en el servidor. Pendiente: documentar el procedimiento de despliegue y desplegar con un usuario que no sea `root`.
 6. Copias de seguridad de la base y de `storage/app/private`, con restauración probada. **Sin configurar:** el usuario las deja para la semana del 2026-11-02 como pronto. Hasta entonces, no guardar datos que importen.
