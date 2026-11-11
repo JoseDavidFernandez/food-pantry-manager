@@ -30,7 +30,7 @@ Con el instalador 5.25.3 el kit actual no funciona bien: no aplaza `install:feat
 | Inertia | 3.x (adaptador Laravel `^3.0`, `@inertiajs/vue3` `^3.0`) | El adaptador Laravel 3 requiere PHP ≥ 8.2 y Laravel ≥ 11. ✔ | [S4], [S5] |
 | Tailwind CSS | 4.x (`^4.1`) | Incluido en el kit. | [S4] |
 | shadcn-vue | Incluido (componentes sobre `reka-ui`; iconos `@lucide/vue`; toasts `vue-sonner`) | Componentes adicionales con `npx shadcn-vue@latest add …` (requiere autorización: modifica dependencias/archivos). | [S2], [S4] |
-| Vite | 8.x (`^8.0`) + Vite+ (`vite-plus`) | Vite requiere Node 20.19+ o 22.12+. ✔ Node 22.22.1. No se encontró requisito publicado de versión de npm. | [S4], [S6] |
+| Vite | Vite+ (`vite-plus` 1.4.0, como el kit) con `vite` como alias de `@voidzero-dev/vite-plus-core` 1.4.0, que trae Vite 8.3.5 (desde el 2026-11-11; antes, `vite` ^8.0 + `vite-plus` 0.3.0) | `vite-plus` 1.4.0 requiere Node ^22.18, ^24.11 o ≥ 26. ✔ Node 22.22.1 en local y Node 26 en el servidor. Una sola copia de Vite: la del alias, que usan `vp` y los plugins (§7.1). | [S4], [S6], [S25] |
 | MySQL (desarrollo local) | 8.0 de MAMP, **solo para desarrollo local** | Laravel 13 admite MySQL 5.7+. ✔ Aviso: Oracle pasó MySQL 8.0 a *Sustaining Support* el 21-04-2026 (sin nuevas correcciones). | [S3], [S8] |
 | MySQL (producción) | **Pendiente** (DT-07) | Comprobar con el proveedor de hosting qué versiones ofrece; valorar MySQL 8.4 LTS antes de publicar. | [S8] |
 
@@ -44,14 +44,14 @@ El kit se instaló desde su rama `main` (`dev-main`): sus versiones etiquetadas 
 | laravel/framework | 13.37.0 | @inertiajs/vue3 | 3.9.1 |
 | inertiajs/inertia-laravel | 3.5.1 | @inertiajs/vite | 3.9.1 |
 | laravel/fortify | 1.41.0 | tailwindcss / @tailwindcss/vite | 4.3.3 |
-| laravel/wayfinder | 0.1.23 | vite | 8.3.4 (paquete `vite` real, sin alias) |
+| laravel/wayfinder | 0.1.23 | vite | 8.3.4, paquete `vite` real (desde el 2026-11-11: alias de `@voidzero-dev/vite-plus-core` 1.4.0, Vite 8.3.5) |
 | laravel/tinker | 3.0.2 | @vitejs/plugin-vue | 6.0.10 |
 | pestphp/pest | 4.7.8 | laravel-vite-plugin | 3.2.0 |
 | pestphp/pest-plugin-laravel | 4.1.0 | @laravel/vite-plugin-wayfinder | 0.1.11 |
-| phpunit/phpunit | 12.5.33 | vite-plus (Vite+) | 0.3.0 (fijada por el kit) |
-| larastan/larastan | 3.13.0 | oxfmt / oxlint (vía vite-plus) | 0.64.0 / 1.79.0 |
+| phpunit/phpunit | 12.5.33 | vite-plus (Vite+) | 0.3.0, fijada por el kit (desde el 2026-11-11: 1.4.0) |
+| larastan/larastan | 3.13.0 | oxfmt / oxlint (vía vite-plus) | 0.64.0 / 1.79.0 (desde el 2026-11-11: 0.74.0 / 1.89.0) |
 | phpstan/phpstan | 2.3.1 | typescript | 5.9.3 |
-| laravel/pint | 1.32.1 | vue-tsc | 2.2.12 |
+| laravel/pint | 1.32.1 | vue-tsc | 2.2.12 (desde el 2026-11-11: 3.3.14) |
 | laravel/sail | 1.69.0 | reka-ui | 2.11.0 |
 | laravel/pail | 1.2.7 | @lucide/vue | 1.60.0 |
 | | | @playwright/test (añadido el 2026-10-21, §7.2) | 1.64.1 |
@@ -63,9 +63,15 @@ El kit se instaló desde su rama `main` (`dev-main`): sus versiones etiquetadas 
 | `.gitignore` | Se añade `.env.testing`. Desde el 2026-10-25 también se ignoran `/CLAUDE.md`, `/.claude/` y `/.impeccable/`. | `.env.testing` contendrá credenciales de pruebas. La configuración de Claude Code e Impeccable se mantiene solo en local (decisión del usuario, 2026-10-25). |
 | `composer.json` | `types:check` → `phpstan analyse --memory-limit=1G`. | Con el `memory_limit` de 128M del PHP CLI, PHPStan agota la memoria en sus procesos paralelos. No se modifica el `php.ini` global. |
 | `vite.config.ts` | `'/*.md'` en `fmt.ignorePatterns`. | `vp check` (oxfmt) revisaba también los documentos Markdown, que no siguen el formato del código. El patrón es de estilo gitignore con raíz en `vite.config.ts`, así que solo excluye los Markdown de la raíz. |
-| `package.json` | `"overrides": { "oxfmt": { "tinypool": "2.1.2" } }` (temporal). | Ver §2.3. |
+| `package.json` | ~~`"overrides": { "oxfmt": { "tinypool": "2.1.2" } }` (temporal).~~ Retirado el 2026-11-11 (§2.3). Desde entonces, el único override es `"vite": "npm:@voidzero-dev/vite-plus-core@1.4.0"`, el mismo del kit. | Ver §2.3. El override de `vite` hace que todos los plugins resuelvan la misma copia de Vite que `vp`. |
 
-### 2.3 Override temporal `oxfmt → tinypool 2.1.2`
+### 2.3 Override temporal `oxfmt → tinypool 2.1.2` (retirado el 2026-11-11)
+
+**Retirado** al pasar a `vite-plus` 1.4.0, con las dos condiciones de retirada cumplidas:
+1. `vite-plus` 1.4.0 → `oxfmt` 0.74.0 → `tinypool` 2.2.0 sin override. El cambio de stack (Vite como alias de `vite-plus-core`, igual que el kit) lo aprobó el usuario expresamente.
+2. `npm explain tinypool` muestra 2.2.0, `npm audit` da 0 vulnerabilidades y pasan las comprobaciones (§7.1, revisión del 2026-11-11).
+
+Se conserva el historial:
 
 **Motivo:**
 - El kit fija `vite-plus@0.3.0` → `oxfmt@=0.64.0` → `tinypool@2.1.0`.
@@ -187,7 +193,7 @@ Siete comprobaciones satisfactorias:
 **Aviso de `npm audit` (revisado el 2026-10-21):** 1 alerta en `vite-plus` ≤ 1.0.0, que `npm audit` muestra como alta [S16][S17].
 - **Origen:** `launch-editor` ≤ 2.14.1, que va empaquetado en el Vite interno de `@voidzero-dev/vite-plus-core` 0.3.0. No es un paquete independiente.
 - **Avisos:** GHSA-698v-4r3x-3vcv (solo Windows, `cmd.exe`), GHSA-587h-7wmj-h5pm (solo Windows) y GHSA-r825-w8mm-5pxw (inyección de argumentos con nombres de archivo que empiezan por `+`/`-`; en Vite solo afecta a WSL). Severidad moderada en GitHub (CVSS v4 6.3).
-- **Corrección:** `launch-editor` 2.14.2 y `vite-plus` ≥ 1.1.0. El `vite` real del proyecto (8.3.4) ya incluye la corrección (≥ 8.3.3).
+- **Corrección:** `launch-editor` 2.14.2 y `vite-plus` ≥ 1.1.0. ~~El `vite` real del proyecto (8.3.4) ya incluye la corrección (≥ 8.3.3).~~ **Era incorrecto (corregido el 2026-11-11):** con `vite-plus` 0.3.0 había dos copias de Vite. `vp build` y `vp dev` lanzaban la CLI de `@voidzero-dev/vite-plus-core` 0.3.0, con su propio Vite 8.2.2 y `launch-editor` 2.14.1 empaquetados, y `vite.config.ts` importa `defineConfig` de `vite-plus`. El paquete `vite` 8.3.4 solo lo importaban los plugins (`laravel-vite-plugin`, `@inertiajs/vite`, `@tailwindcss/vite`, `@vitejs/plugin-vue`), así que su corrección no protegía el servidor de desarrollo. Desde la migración del 2026-11-11 (abajo) solo queda una copia.
 - **Alcance:** solo el servidor de desarrollo (`vp dev`, middleware `/__open-in-editor`). El build y producción no lo incluyen; en este equipo (macOS) no se dan las condiciones de los avisos. No la introdujo Playwright.
 - **Propuesta (no aplicada):** migrar a `vite-plus` 1.3.0 en una rama propia, junto con DT-10.
   - **Riesgos:** cambia la resolución de `vite` (alias a `vite-plus-core`); `oxfmt` 0.64 → 0.73 y `oxlint` 1.79 → 1.88 pueden reformatear y señalar archivos; `vitest` 4 → 5, que no se usa; hay que revisar el override de `tinypool`.
@@ -198,6 +204,14 @@ Siete comprobaciones satisfactorias:
   - `composer audit` no tiene avisos.
   - Las sesiones E2E usan el build (`global-setup` se detiene si hay `public/hot`), así que no exponen el servidor de desarrollo.
   - La migración sigue pendiente de decisión del usuario y no se aborda en la V1 multiusuario.
+- **Migración a `vite-plus` 1.4.0 (2026-11-11, decisión del usuario; rama `chore/vite-plus-1x`):**
+  - **Antes:** `npm audit` daba 8 paquetes afectados (1 alto, 7 moderados), todos fuera del bundle. Se comprobó con un build con sourcemaps: las 71 sourcemaps solo contenían `resources/js` y dependencias de ejecución (Vue, reka-ui, Inertia…). Eran `vite-plus` 0.3.0 (`launch-editor` y Vite 8.2.2 empaquetados), Vitest 4.1.11 (`@vitest/mocker` y sus paquetes de navegador, sin usar) y `minimatch` 9.0.9 vía `vue-tsc` 2.
+  - **Cambio:** igual que el kit [S25]: `vite-plus` 1.4.0, `vite` como alias de `@voidzero-dev/vite-plus-core` 1.4.0 (dependencia y override) y `vue-tsc` ^3.3.13. Se retira el override de `tinypool` (§2.3, DT-10).
+  - **Instalación:** npm rechazaba el cambio por *peers* del lock antiguo (`@vue/language-core` 2 y Vitest 4). Se resolvió en dos pasos, sin `--force` ni `--legacy-peer-deps`: primero `vue-tsc` y después retirar e instalar `vite-plus` y `vite`.
+  - **Resultado:** una sola copia de Vite (8.3.5, dentro de `vite-plus-core`), `launch-editor` 2.14.2, Vitest 5.0.5, `oxfmt` 0.74.0, `oxlint` 1.89.0, `tinypool` 2.2.0 y sin `minimatch`.
+  - **Comprobaciones:** `npm audit` con 0 vulnerabilidades; `npm ls` sin errores; `composer ci:check` correcto (formato de 111 archivos y lint de 104 sin cambios ni avisos, `vue-tsc` 3 sin errores, Pint, PHPStan y Pest 452/452); `npm run build` correcto (3536 módulos, igual que antes); E2E completo en verde con la cuenta nueva `e2e-vite-plus-1x@food-pantry.test`, sin limpieza.
+  - **Comportamiento:** sin cambios observados. `oxfmt` no reformateó ningún archivo y `oxlint` no señaló nada nuevo.
+  - **Servidor:** el despliegue ejecuta `npm install` (paso 5 del Toolkit) y `npm run build`, así que instalará el lock nuevo. Requiere Node ^22.18, ^24.11 o ≥ 26: el servidor usa Node 26.
 
 ### 7.2 Sesión E2E con Playwright (2026-10-21)
 
@@ -226,7 +240,7 @@ Siete comprobaciones satisfactorias:
 | DT-07 | Versión de MySQL en producción: comprobar con el proveedor de hosting. MySQL 8.0 queda solo para desarrollo local (ya sin correcciones); valorar MySQL 8.4 LTS, recomendada por Oracle [S8], y verificar que los tests de integración pasan en esa versión. | Antes de publicar (Fase 7). |
 | DT-08 | Laravel Boost: **resuelta**, no instalado (`--no-boost`). Solo se instalaría con autorización expresa. | Cerrada (2026-10-20). |
 | DT-09 | Verificación de email no bloqueante en desarrollo: **resuelta**, listener solo para `APP_ENV=local` (§4). Requisito: producción nunca debe usar `APP_ENV=local`. | Cerrada (2026-10-20). |
-| DT-10 | Retirar el override `oxfmt → tinypool` cuando se cumplan las condiciones de §2.3. | En cada actualización del kit o de `vite-plus`. |
+| DT-10 | Retirar el override `oxfmt → tinypool` cuando se cumplan las condiciones de §2.3: **resuelta**, retirado al pasar a `vite-plus` 1.4.0 (§2.3, §7.1). | Cerrada (2026-11-11). |
 
 ## 9. Fuentes (consultadas el 2026-10-20)
 
@@ -254,6 +268,7 @@ Siete comprobaciones satisfactorias:
 - [S22] Unsplash API Guidelines (clave, hotlinking obligatorio, 50 peticiones/h en demo): https://help.unsplash.com/api-guidelines/unsplash-api-guidelines
 - [S23] Pixabay API (clave, sin hotlinking permanente, caché de 24 h): https://pixabay.com/api/docs/
 - [S24] Pexels API (clave, 200 peticiones/h y 20 000/mes, atribución): https://www.pexels.com/api/documentation/
+- [S25] `package.json` del kit Vue, rama `main` (consultado el 2026-11-11: `vite-plus` 1.4.0, `vite` y override como alias de `@voidzero-dev/vite-plus-core` 1.4.0, `vue-tsc` ^3.3.13): https://github.com/laravel/vue-starter-kit
 
 ## 10. Imágenes de ingredientes (2026-10-21)
 
