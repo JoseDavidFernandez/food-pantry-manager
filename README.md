@@ -8,6 +8,28 @@ Proyecto personal, desarrollado de principio a fin (análisis, diseño, backend,
 
 > El registro crea una cuenta real y pide verificar el correo. La interfaz está en español.
 
+## Capturas
+
+### Escritorio
+
+| Inicio | Lista de la compra |
+|---|---|
+| ![Inicio](docs/screenshots/desktop-inicio.jpg) | ![Lista de la compra](docs/screenshots/desktop-lista.jpg) |
+
+| Menú semanal | Receta |
+|---|---|
+| ![Menú semanal](docs/screenshots/desktop-menu.jpg) | ![Receta](docs/screenshots/desktop-receta.jpg) |
+
+![Inventario](docs/screenshots/desktop-inventario.jpg)
+
+### Móvil
+
+<p align="center">
+  <img src="docs/screenshots/mobile-inicio.jpg" alt="Inicio en móvil" width="250">
+  <img src="docs/screenshots/mobile-lista.jpg" alt="Lista de la compra en móvil" width="250">
+  <img src="docs/screenshots/mobile-receta.jpg" alt="Receta en móvil" width="250">
+</p>
+
 ---
 
 ## Qué hace
