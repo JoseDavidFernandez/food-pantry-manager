@@ -58,7 +58,7 @@ Proyecto personal, desarrollado de principio a fin (análisis, diseño, backend,
 - **Lógica de negocio en acciones de dominio**, fuera de los controladores y de los componentes Vue, para que las reglas vivan en un solo sitio y se puedan probar.
 - **Multi-tenant por hogar** con *policies* y *scopes*: un usuario nunca ve ni modifica datos de otro hogar.
 - **Cantidades con `bcmath`**, nunca con números en coma flotante, para evitar errores de redondeo al sumar y restar existencias.
-- **Más de 440 pruebas automáticas** (Pest) y un recorrido completo **de extremo a extremo** (Playwright), además de análisis estático (Larastan/PHPStan y `vue-tsc`).
+- **Más de 450 pruebas automáticas** (Pest) y un recorrido completo **de extremo a extremo** (Playwright), además de análisis estático (Larastan/PHPStan y `vue-tsc`).
 - **Accesibilidad y móvil primero** en las pantallas de uso diario: objetivos táctiles de 44 px, foco visible y alternativas a las interacciones de arrastrar y soltar.
 
 ## Estado
@@ -67,4 +67,4 @@ MVP funcional y desplegado. Documentación de producto y técnica (reglas de neg
 
 ## Autor
 
-**José David Fernández Comino** — [LinkedIn](https://www.linkedin.com/in/josedavidfernándezcomino/) · [GitHub](https://github.com/JoseDavidFernandez)
+**Jose David Fernández Comino** — [LinkedIn](https://www.linkedin.com/in/josedavidfernandezcomino/) · [GitHub](https://github.com/JoseDavidFernandez)
