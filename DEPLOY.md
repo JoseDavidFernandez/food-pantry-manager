@@ -38,6 +38,70 @@ Instalado y activo en el servidor, con las jails:
 - `recidive`
 - `plesk-apache`
 
+## Cabeceras de seguridad
+Las cabeceras **no están en el repositorio**: se ponen en Apache, en Plesk →
+Websites & Domains → (el dominio) → Apache & nginx Settings → **Additional
+directives for HTTPS**. Laravel no envía ninguna de estas cabeceras.
+
+### Las directivas
+```
+Header always set Strict-Transport-Security "max-age=31536000"
+Header always set X-Content-Type-Options "nosniff"
+Header always set X-Frame-Options "DENY"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+Header always unset X-Powered-By
+Header unset X-Powered-By
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https://upload.wikimedia.org https://images.openfoodfacts.org https://static.openfoodfacts.org; font-src 'self'; connect-src 'self'; manifest-src 'self'; media-src 'none'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+```
+- HSTS va sin `includeSubDomains`: solo protege este subdominio.
+- `X-Frame-Options: DENY` y `frame-ancestors 'none'` dicen lo mismo (la app no
+  se puede incrustar en ningún sitio); la primera es para navegadores antiguos.
+- `X-Powered-By` se quita dos veces porque PHP-FPM la añade en respuestas que
+  no pasan por `always`.
+
+### La CSP, directiva a directiva
+Sin `'unsafe-inline'`, `'unsafe-eval'` ni hashes: la app no tiene scripts ni
+estilos inline.
+
+| Directiva | Por qué |
+|---|---|
+| `script-src 'self'` | Los módulos de Vite (`/build/assets`) y `/theme-init.js`, que aplica el modo oscuro antes de pintar. |
+| `style-src 'self'` | El CSS de Vite y `/errors.css` (páginas de error y de mantenimiento). La barra de progreso de Inertia va con `includeCSS: false` y sus estilos en `app.css`. Los `:style` de Vue y de los componentes se aplican por CSSOM, que la CSP permite. |
+| `img-src` | Las imágenes de los alimentos se guardan y se sirven desde la app; los tres hosts externos son las **miniaturas de la búsqueda de imágenes** (Wikimedia Commons y Open Food Facts), que carga el navegador. `data:` como en el resto de proyectos. |
+| `font-src 'self'` | Archivo, servida desde el build. |
+| `connect-src 'self'` | Peticiones de Inertia. La búsqueda de imágenes pasa por el servidor. |
+| `form-action 'self'` | Todos los formularios y sus redirecciones son del mismo origen. |
+| `frame-src 'none'`, `frame-ancestors 'none'` | La app no incrusta ni se deja incrustar. |
+| `manifest-src`, `media-src`, `worker-src`, `object-src`, `base-uri` | Cerradas o limitadas al propio origen: la app no usa vídeo, audio, workers ni plugins. |
+
+**Hay que cambiarla si:**
+- se añade un script, estilo, fuente o imagen de otro origen;
+- la v2 quita la sección Imagen: entonces se retiran los tres hosts de `img-src`;
+- se activa el SSR de Inertia: revisar el HTML que genera;
+- se vuelve a escribir un `<script>`, un `<style>` o un `style="…"` en una
+  plantilla Blade (`tests/Feature/ContentSecurityPolicyTest.php` lo detecta).
+
+### Probar un cambio de la CSP
+1. Poner la nueva política como
+   `Header always set Content-Security-Policy-Report-Only "…"` (misma lista),
+   sin quitar la que está en vigor. El navegador avisa en la consola, pero no
+   bloquea nada.
+2. Recorrer la app con la consola abierta, filtrando por «Content Security
+   Policy»: login, 2FA y passkeys, Ajustes (Apariencia en claro, oscuro y
+   sistema, recargando; Seguridad con el QR; Hogar e invitaciones), Inventario
+   con la búsqueda de imágenes, Recetas, Menú, Lista de la compra, una URL
+   inexistente y una navegación lenta (DevTools → «Slow 4G») para ver la barra
+   de progreso.
+3. Sin avisos, sustituir la política en vigor por la nueva y quitar la línea
+   `Report-Only`.
+
+### Comprobar que están puestas
+```
+curl -sI https://foodpantry.josedavidfernandezcomino.com/login
+```
+Deben salir las seis cabeceras de arriba y ningún `X-Powered-By`.
+
 ## Cómo llega el código
 Plesk Git descarga el repositorio de GitHub por SSH usando una deploy key de solo lectura:
 - La clave está en `/var/www/vhosts/foodpantry.josedavidfernandezcomino.com/.ssh/id_rsa`.

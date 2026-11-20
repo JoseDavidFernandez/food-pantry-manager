@@ -9,9 +9,11 @@ use App\Support\QuantityTooLarge;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Laravel\Fortify\Contracts\LoginViewResponse;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -51,6 +53,27 @@ return Application::configure(basePath: dirname(__DIR__))
             Inertia::flash('toast', ['type' => 'error', 'message' => $exception->getMessage()]);
 
             return back();
+        });
+
+        // Too many login attempts: keep the 429 and its Retry-After, but answer with the login page and
+        // the reason under the email field, instead of Inertia's generic error dialog.
+        $exceptions->render(function (ThrottleRequestsException $exception, Request $request) {
+            if (! $request->routeIs('login.store') || $request->expectsJson()) {
+                return null;
+            }
+
+            $headers = $exception->getHeaders();
+            $seconds = max(1, (int) ($headers['Retry-After'] ?? 60));
+
+            // Inertia resolved the shared "errors" before the route ran; replace them for this response
+            // only (nothing is written to the session, so the next visit is clean).
+            Inertia::share('errors', Inertia::always((object) [
+                'email' => __('auth.throttle', ['seconds' => $seconds]),
+            ]));
+
+            return app(LoginViewResponse::class)->toResponse($request)
+                ->setStatusCode(429)
+                ->withHeaders($headers);
         });
 
         $exceptions->render(function (QuantityTooLarge $exception, Request $request) {

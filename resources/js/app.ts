@@ -32,8 +32,8 @@ void createInertiaApp({
         });
     },
     progress: {
-        // Almagre; app.css makes the bar follow --primary in light and dark.
-        color: '#a63f28',
+        // Its styles live in app.css (colour from --primary): an injected <style> would break the CSP.
+        includeCSS: false,
     },
 });
 

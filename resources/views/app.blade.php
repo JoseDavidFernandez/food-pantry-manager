@@ -1,34 +1,12 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-appearance="{{ $appearance ?? 'system' }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Inline script to detect system dark mode preference and apply it immediately --}}
-        <script>
-            (function() {
-                const appearance = '{{ $appearance ?? "system" }}';
-
-                if (appearance === 'system') {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    if (prefersDark) {
-                        document.documentElement.classList.add('dark');
-                    }
-                }
-            })();
-        </script>
-
-        {{-- Inline style to set the HTML background color based on our theme in app.css --}}
-        <style>
-            html {
-                background-color: #e4e3df;
-            }
-
-            html.dark {
-                background-color: #161412;
-            }
-        </style>
+        {{-- Applies the system dark mode before the first paint. A file, not an inline script, so the
+             Content-Security-Policy stays at script-src 'self'. The page background is in app.css. --}}
+        <script src="/theme-init.js"></script>
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">

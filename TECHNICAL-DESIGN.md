@@ -126,7 +126,13 @@ Modelos Eloquent → MySQL
   - **Estado real tras instalar:** el kit trae `Features::emailVerification()` activado, `User` **sí** implementa `MustVerifyEmail` y las rutas de `routes/web.php` y parte de `routes/settings.php` usan el middleware `verified`. Con `MAIL_MAILER=log`, el enlace de verificación se escribe en el log, sin enviarse.
   - **Aplicado (DT-09):** el listener `App\Listeners\MarkEmailAsVerifiedInLocal` marca el email como verificado al registrarse **solo cuando `APP_ENV=local`**. En `testing` y `production` el flujo estándar (`MustVerifyEmail` + middleware `verified`) queda intacto; está cubierto por tests.
 - **2FA y passkeys:** vienen activadas en el kit; se conservan tal como vienen y se revisan en la Fase 7 (no bloqueante).
-- **Rate limiting:** el de Fortify (`FortifyServiceProvider`).
+- **Límites del login (decisión del usuario, 2026-11-20):** limitador `login` de `FortifyServiceProvider` con tres límites, cada uno con su clave; cuenta todo `POST /login`, acierte o no:
+  - correo + IP: 5 por minuto (el del kit);
+  - solo correo: 10 cada 15 minutos, aunque cambie la IP. Contrapartida aceptada: quien conozca un correo puede bloquear su login con contraseña; las passkeys tienen su propio limitador;
+  - solo IP: 20 por minuto, para cualquier correo.
+
+  Al superarlo, la respuesta sigue siendo **429** con `Retry-After`, pero es la propia página de login con el mensaje «Demasiados intentos. Vuelve a intentarlo en N segundos.» bajo el correo (`bootstrap/app.php`), no el diálogo genérico de Inertia. Los clientes JSON reciben el 429 estándar. Pruebas: `LoginThrottleTest`. En producción, Apache recibe la IP real del cliente (comprobado por el usuario en los registros de Plesk).
+- **2FA y passkeys:** límites del kit (`two-factor` 5 por minuto por sesión de login; `passkeys` 10 por minuto por credencial + IP).
 
 ## 5. Seguridad
 
@@ -143,6 +149,7 @@ Modelos Eloquent → MySQL
 - **Correo de invitación:** notificación por el mailer configurado. En desarrollo es `log` (`MAIL_MAILER=log`): escribe el correo en el registro y no envía nada, la interfaz lo indica y muestra el enlace una vez. En producción hace falta un proveedor real (DT-05, Fase 7).
 - Validación con Form Requests. `$fillable` explícito; `household_id` nunca llega desde el cliente.
 - Protección CSRF/origen: middleware `PreventRequestForgery` de Laravel 13 ([S1]).
+- **Cabeceras y CSP (decisión del usuario, 2026-11-20):** se ponen en Apache, no en la app; la línea completa y el porqué de cada directiva están en [DEPLOY.md › Cabeceras de seguridad](DEPLOY.md). La CSP no admite `'unsafe-inline'`, `'unsafe-eval'` ni hashes, así que el HTML que escribe el servidor no lleva código inline: el modo oscuro inicial está en `public/theme-init.js`, el fondo y la barra de progreso de Inertia (`includeCSS: false`) en `app.css`, y las páginas de error y mantenimiento usan `resources/views/errors/minimal.blade.php` con `public/errors.css`. La cookie `appearance` solo acepta `light`, `dark` y `system`. Pruebas: `ContentSecurityPolicyTest`.
 - Secretos solo en `.env` (no versionado). `.env.example` sin valores reales.
 - Datos personales limitados a nombre y email.
 
