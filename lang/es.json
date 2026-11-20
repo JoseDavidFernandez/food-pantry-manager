@@ -17,5 +17,13 @@
     "The provided two factor authentication code was invalid.": "El código de verificación en dos pasos no es válido.",
     "The provided two factor recovery code was invalid.": "El código de recuperación no es válido.",
     "Profile updated.": "Perfil actualizado.",
-    "Password updated.": "Contraseña actualizada."
+    "Password updated.": "Contraseña actualizada.",
+    "Unauthorized": "No autorizado",
+    "Payment Required": "Pago requerido",
+    "Forbidden": "Acceso denegado",
+    "Not Found": "Página no encontrada",
+    "Page Expired": "La página ha caducado",
+    "Too Many Requests": "Demasiadas peticiones",
+    "Server Error": "Error del servidor",
+    "Service Unavailable": "Servicio no disponible"
 }

@@ -85,10 +85,18 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($request->session()->get('login.id'));
         });
 
+        // Every POST /login counts, successful or not. Three limits, each with its own key:
+        // - email + IP: 5 per minute (the kit's default);
+        // - email alone: 10 per 15 minutes, so changing IP does not buy more guesses at one account;
+        // - IP alone: 20 per minute, so one IP cannot try many accounts.
         RateLimiter::for('login', function (Request $request) {
-            $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
+            $email = Str::transliterate(Str::lower((string) $request->input(Fortify::username())));
 
-            return Limit::perMinute(5)->by($throttleKey);
+            return [
+                Limit::perMinute(5)->by($email.'|'.$request->ip()),
+                Limit::perMinutes(15, 10)->by('email:'.$email),
+                Limit::perMinute(20)->by('ip:'.$request->ip()),
+            ];
         });
 
         RateLimiter::for('passkeys', function (Request $request) {

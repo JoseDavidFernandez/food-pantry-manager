@@ -16,7 +16,11 @@ class HandleAppearance
      */
     public function handle(Request $request, Closure $next): Response
     {
-        View::share('appearance', $request->cookie('appearance') ?? 'system');
+        // The cookie is not encrypted (the browser writes it): anything other than the three known
+        // values falls back to "system".
+        $appearance = $request->cookie('appearance');
+
+        View::share('appearance', in_array($appearance, ['light', 'dark', 'system'], true) ? $appearance : 'system');
 
         return $next($request);
     }
