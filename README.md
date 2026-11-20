@@ -61,6 +61,9 @@ Proyecto personal, desarrollado de principio a fin (análisis, diseño, backend,
 - **Más de 450 pruebas automáticas** (Pest) y un recorrido completo **de extremo a extremo** (Playwright), además de análisis estático (Larastan/PHPStan y `vue-tsc`).
 - **Accesibilidad y móvil primero** en las pantallas de uso diario: objetivos táctiles de 44 px, foco visible y alternativas a las interacciones de arrastrar y soltar.
 
+## Ejecutarlo en local
+Crea dos bases MySQL (una de desarrollo y `food_pantry_manager_test` para Pest, que la fija `phpunit.xml`), copia `.env.example` a `.env` con las credenciales de la base de desarrollo y ejecuta `composer setup` (instala dependencias, genera la clave, migra y compila los assets). Después copia `.env` a `.env.testing` y cambia en él las credenciales por las de la base de pruebas.
+
 ## Estado
 
 MVP funcional y desplegado. Documentación de producto y técnica (reglas de negocio, modelo de datos, roadmap y decisiones) en el repositorio.

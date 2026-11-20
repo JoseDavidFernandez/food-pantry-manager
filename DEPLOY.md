@@ -39,7 +39,7 @@ Instalado y activo en el servidor, con las jails:
 - `plesk-apache`
 
 ## Cómo llega el código
-Plesk Git descarga el repositorio privado de GitHub por SSH usando una deploy key de solo lectura:
+Plesk Git descarga el repositorio de GitHub por SSH usando una deploy key de solo lectura:
 - La clave está en `/var/www/vhosts/foodpantry.josedavidfernandezcomino.com/.ssh/id_rsa`.
 - En GitHub está registrada como «Plesk VPS - Food Pantry Manager».
 - El repositorio que gestiona Plesk está en `.../git/food-pantry-manager`.

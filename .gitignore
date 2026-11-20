@@ -50,5 +50,6 @@ yarn-error.log
 
 # Claude Code e Impeccable: instrucciones, configuración, skills, agentes y archivos de trabajo (solo en local)
 /CLAUDE.md
+/PROJECT-STATUS.md
 /.claude/
 /.impeccable/
