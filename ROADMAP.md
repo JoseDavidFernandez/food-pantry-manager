@@ -1,6 +1,6 @@
 # Roadmap — Food & Pantry Manager
 
-> Fases del MVP. Una fase se cierra solo cuando se cumplen todos sus criterios. Estado actual en [PROJECT-STATUS.md](PROJECT-STATUS.md); criterios `CA-xx` en [PRD.md §7](PRD.md); decisiones `DT-xx` en [TECHNICAL-DESIGN.md §8](TECHNICAL-DESIGN.md).
+> Fases del MVP. Una fase se cierra solo cuando se cumplen todos sus criterios. Criterios `CA-xx` en [PRD.md §7](PRD.md); decisiones `DT-xx` en [TECHNICAL-DESIGN.md §8](TECHNICAL-DESIGN.md).
 
 | Fase | Nombre | Depende de | Estado |
 |---|---|---|---|
@@ -13,7 +13,7 @@
 | 6 | Recepción de compra | 5 | Cerrada (2026-10-21) |
 | 7 | Publicación | 6 | Pendiente |
 
-El estado de cada tarea se registra solo en [PROJECT-STATUS.md](PROJECT-STATUS.md); aquí solo cambia el estado de la fase al abrirla o cerrarla.
+El estado de cada tarea se registra fuera de este repositorio; aquí solo cambia el estado de la fase al abrirla o cerrarla.
 
 ## Fase 0 — Preparación documental
 **Tareas:** redactar los ocho documentos; validar stack en fuentes oficiales; incorporar decisiones funcionales.
@@ -66,7 +66,7 @@ El estado de cada tarea se registra solo en [PROJECT-STATUS.md](PROJECT-STATUS.m
 **Criterios de cierre:** CA-14 en verde; flujo menú → lista → recepción → inventario verificado (E2E o prueba manual documentada).
 
 ## Fase 7 — Publicación
-**Prerrequisito: cambios de producto (2026-10-21) — cumplido.** No son tareas de publicación. El usuario los validó en el navegador: la prueba manual intensiva el 2026-10-28 y el rediseño (con el modo oscuro), las categorías y la búsqueda real de imágenes el 2026-10-29 (registro en [PROJECT-STATUS.md](PROJECT-STATUS.md)). Alcance validado:
+**Prerrequisito: cambios de producto (2026-10-21) — cumplido.** No son tareas de publicación. El usuario los validó en el navegador: la prueba manual intensiva el 2026-10-28 y el rediseño (con el modo oscuro), las categorías y la búsqueda real de imágenes el 2026-10-29. Alcance validado:
 - el rediseño, las categorías (RN-31) y las imágenes (RN-32);
 - la reorganización: Inventario como único apartado de alimentos, el calendario con recetario y arrastrar y soltar (RN-33), e Inicio como panel de resumen (RN-34);
 - la compra por periodo: lista persistente sin cierre del menú, historial, «No comido» y clasificación automática (RN-31, RN-36, RN-37).
@@ -78,7 +78,7 @@ CA-19 a CA-22 están cubiertos por tests automáticos y, salvo la búsqueda real
 3. **Alerta de `vite-plus` y política de `npm audit`:** decidir entre migrar a `vite-plus` ≥ 1.1.0 (propuesta en [TECHNICAL-DESIGN.md §7.1](TECHNICAL-DESIGN.md), junto con DT-10) o aceptar la alerta con una mitigación documentada y fecha de revisión. Fijar qué parte de `npm audit` bloquea la CI a partir de resultados verificados en ese momento (por ejemplo, dependencias de producción frente al árbol completo).
 4. **CI con MySQL** (DT-06), tras las tareas 1–3:
    - servicio MySQL con la versión elegida en la tarea 1;
-   - pasos explícitos (`composer install`, `npm ci`, generar `APP_KEY`, migraciones, `composer ci:check`, `npm run build` y `npm audit` según la política de la tarea 3), sin depender de `composer setup`, que copia `.env.example` (SQLite) y migra sobre esa conexión;
+   - pasos explícitos (`composer install`, `npm ci`, generar `APP_KEY`, migraciones, `composer ci:check`, `npm run build` y `npm audit` según la política de la tarea 3), sin depender de `composer setup`, que copia `.env.example` (con credenciales de ejemplo) y migra sobre esa conexión;
    - migraciones y tests solo contra `food_pantry_manager_test`, con el guardián de `tests/TestCase.php`; en la CI no existe base de desarrollo;
    - credenciales efímeras y exclusivas de la CI, como *secrets* o variables del repositorio, nunca las de MAMP ni las de producción;
    - `APP_KEY` generada en cada ejecución.
