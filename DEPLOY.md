@@ -64,7 +64,7 @@ php artisan optimize
 
 ### Para desplegar
 1. Si el despliegue incluye una **migración**, comprobar antes que hay una copia
-   de seguridad reciente de la base de datos.
+   de seguridad reciente de la base de datos (ver «Copias de seguridad»).
 2. Hacer push a `main` en GitHub.
 3. En Plesk: Laravel Toolkit → Deployment → **Deploy**.
 4. Verificar el despliegue (siguiente apartado).
@@ -79,6 +79,61 @@ php artisan migrate:status
 - Las fechas de `manifest.json` y `config.php` deben ser de la hora del
   despliegue. **El servidor va en UTC.**
 - `migrate:status` no debe mostrar migraciones pendientes.
+
+## Copias de seguridad
+Las copias se hacen con **Backup Manager** de Plesk, a nivel de servidor: cubren
+esta suscripción y la de VyaMap. Probadas con una restauración real en
+noviembre de 2026.
+
+### Qué se copia
+- Configuración, correo, archivos y bases de datos.
+- Se excluyen los archivos de log («Exclude log files») y lo que se regenera en
+  cada despliegue con `composer install` y `npm run build`. Las exclusiones van
+  separadas por comas y son relativas a cada suscripción (las de `/httpdocs`
+  son de VyaMap):
+  ```
+  /httpdocs/node_modules, /httpdocs/vendor, /httpdocs/public/build, /food-pantry-manager/node_modules, /food-pantry-manager/vendor, /food-pantry-manager/public/build
+  ```
+
+### Programación
+- Diaria, de madrugada (hora del servidor, **UTC**).
+- Incremental, con una copia completa cada semana.
+- Se guardan como máximo **2 copias completas**, y las manuales también
+  cuentan: una copia completa manual puede hacer que se borre la completa
+  programada más antigua.
+- Aviso por correo si una copia falla.
+
+### Copia fuera del servidor
+Backup Manager guarda las copias en el propio VPS: si se pierde el servidor, se
+pierden con él. Por eso, una vez a la semana:
+1. Backup Manager → copia completa más reciente → **Download**, protegida con
+   contraseña. La contraseña está en el gestor de contraseñas: sin ella la copia
+   no se puede restaurar.
+2. Comprobar que el archivo pesa lo que indica Plesk. En macOS sale algo más,
+   porque Plesk cuenta 1 MB = 1.048.576 bytes.
+3. Guardarlo fuera del equipo (disco externo) con la fecha en el nombre y borrar
+   las copias de hace más de un mes.
+
+Más adelante, esta descarga puede sustituirse por un script que, por SSH, se
+traiga los volcados de las bases de datos, el `.env` y `storage`.
+
+### Antes de desplegar una migración
+- En Backup Manager, comprobar que la última copia programada está en verde.
+- Si desde esa copia hay datos que no se quieren perder, exportar un volcado
+  solo de la base (**Databases → Export Dump**). No es una copia de Backup
+  Manager, así que no cuenta para el máximo de 2 completas.
+
+### Restaurar
+- **Antes de restaurar**, hacer una copia del estado actual, por si el resultado
+  no es el esperado.
+- **Solo la base de datos** (lo habitual): Backup Manager → la copia →
+  **Restore** → **Selected objects** → **Database** → la base de Food Pantry.
+  Una suscripción cada vez. No hace falta volver a desplegar.
+- **Subscription** restaura la suscripción entera, **también los archivos**
+  (código, `.env` y `storage`). Solo si se ha perdido todo. Después hay que
+  desplegar (**Deploy**), porque `vendor`, `node_modules` y `public/build` no
+  están en la copia.
+- Al terminar, entrar en la aplicación y comprobar que están los datos.
 
 ## Comprobar qué commit está desplegado
 En el servidor:
@@ -96,7 +151,7 @@ Debe coincidir con el último commit de GitHub.
 
 ## Plan B: despliegue manual (si el script falla)
 Los pasos antiguos, por si falla el despliegue del Toolkit:
-1. Si hay migración, comprobar que hay copia de seguridad reciente de la base de datos.
+1. Si hay migración, comprobar que hay copia de seguridad reciente de la base de datos (ver «Copias de seguridad»).
 2. En Plesk: Subscriptions → foodpantry… → Git → **Pull** y después **Deploy**.
 3. Por SSH, desde `~/food-pantry-manager`:
    ```
